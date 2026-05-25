@@ -43,25 +43,27 @@ router.post(
   requireAuth,
   requireRole("admin"),
   async (req, res): Promise<void> => {
-    const parsed = CreateUserBody.safeParse(req.body);
-    if (!parsed.success) {
-      res
-        .status(400)
-        .json({ message: "Validation failed: check name, email, password, and role." });
-      return;
-    }
-    const { name, email, password, role } = parsed.data;
+    try {
+      const parsed = CreateUserBody.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ message: "Validation failed: check name, email, password, and role.", errors: parsed.error.flatten() });
+        return;
+      }
+      const { name, email, password, role } = parsed.data;
 
-    const existing = await UserModel.findOne({ email });
-    if (existing) {
-      res.status(409).json({ message: "A user with this email already exists." });
-      return;
-    }
+      const existing = await UserModel.findOne({ email: email.toLowerCase() });
+      if (existing) {
+        res.status(409).json({ message: "A user with this email already exists." });
+        return;
+      }
 
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = await UserModel.create({ name, email, passwordHash, role });
-    const detail = await buildUserDetail(user);
-    res.status(201).json(detail);
+      const passwordHash = await bcrypt.hash(password, 10);
+      const user = await UserModel.create({ name, email: email.toLowerCase(), passwordHash, role });
+      const detail = await buildUserDetail(user);
+      res.status(201).json(detail);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to create user" });
+    }
   }
 );
 

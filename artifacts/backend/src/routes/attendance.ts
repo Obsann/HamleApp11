@@ -55,18 +55,30 @@ router.post(
   requireAuth,
   requireRole("admin", "teacher"),
   async (req, res): Promise<void> => {
-    const parsed = CreateAttendanceBody.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ message: parsed.error.message });
-      return;
+    try {
+      const parsed = CreateAttendanceBody.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ message: "Invalid attendance data", errors: parsed.error.flatten() });
+        return;
+      }
+      if (!parsed.data.studentId) {
+        res.status(400).json({ message: "studentId is required" });
+        return;
+      }
+      const student = await StudentModel.findById(parsed.data.studentId);
+      if (!student) {
+        res.status(404).json({ message: "Student not found" });
+        return;
+      }
+      const record = await AttendanceModel.create({
+        ...parsed.data,
+        teacherId: req.user!.userId,
+      });
+      const enriched = await enrichAttendance(record);
+      res.status(201).json(enriched);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to record attendance" });
     }
-
-    const record = await AttendanceModel.create({
-      ...parsed.data,
-      teacherId: req.user!.userId,
-    });
-    const enriched = await enrichAttendance(record);
-    res.status(201).json(enriched);
   }
 );
 
