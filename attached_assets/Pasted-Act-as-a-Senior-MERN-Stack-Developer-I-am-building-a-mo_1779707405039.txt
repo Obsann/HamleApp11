@@ -1,0 +1,30 @@
+Act as a Senior MERN Stack Developer. I am building a mobile student information system for Hamle Elementary School. I have already completed the database normalization design, and now I need to implement the application. Please provide a project roadmap and initial codebase for the following:
+
+1. Architecture:
+
+Backend (Node.js/Express/Mongoose): Set up a RESTful API structure. Define Mongoose schemas based on a relational design: User (with roles: Admin, Teacher, Parent), Student (linked to parents), and Report (storing grades/assessment/attendance).
+
+Frontend (React Native/Expo): Use Expo Router for navigation.
+
+2. Technical Requirements:
+
+Authentication: Implement JWT-based login. Secure the routes so that Parents can only see their child's data, and Teachers can only manage their assigned students' records.
+
+Offline Capability: Since connectivity is a challenge for our school, please suggest how to implement local caching (using TanStack Query or similar) so users can view previously fetched data offline.
+
+3. Deliverables:
+
+Folder Structure: Provide an optimized folder structure for a MERN+Expo project.
+
+Database Logic: Provide the Mongoose schema definitions for Student and Report that handle the normalized data structure we designed (specifically handling student performance and attendance).
+
+API Skeleton: Provide a sample controller for a Teacher to post attendance and a Parent to get their child's report.
+
+Please keep the code clean, modular, and ready for deployment to mobile devices."
+
+Tips for your Implementation Team:
+Handling the Normalization: When the AI generates the Mongoose schemas, ensure it references your Phase II documentation regarding registration and report tables to ensure you are not losing the data structure integrity you already worked on.
+
+For the "Hamle Elementary" Context: Ask the AI to ensure the UI is "lightweight"—Hamle Elementary parents may have varying levels of tech-literacy, so emphasize "simple, large-text, high-contrast UI components" in your follow-up prompts to the AI.
+
+Development Environment: Make sure everyone in your group installs Node.js and Expo Go on their phones so you can test the UI in real-time as you build it.

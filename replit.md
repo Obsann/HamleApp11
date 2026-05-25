@@ -1,6 +1,6 @@
-# [Project name]
+# Hamle Elementary SIS
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A mobile Student Information System for Hamle Elementary School — built with Expo (React Native) and an Express/PostgreSQL backend.
 
 ## Run & Operate
 
@@ -9,12 +9,13 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL`, `SESSION_SECRET` — Postgres connection string and JWT secret
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- Mobile: Expo (React Native) + Expo Router
+- API: Express 5 + JWT authentication
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
@@ -22,15 +23,41 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — source of truth for all API contracts
+- `lib/db/src/schema/` — Drizzle table schemas (users, students, reports, attendance)
+- `artifacts/api-server/src/routes/` — Express route handlers
+- `artifacts/api-server/src/middlewares/auth.ts` — JWT middleware + role guards
+- `artifacts/api-server/src/lib/seed.ts` — seed data (runs once on startup)
+- `artifacts/mobile/app/` — Expo Router screens
+- `artifacts/mobile/context/AuthContext.tsx` — JWT auth state + AsyncStorage
+- `artifacts/mobile/constants/colors.ts` — design tokens (deep blue + gold)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Contract-first: OpenAPI spec drives codegen for both React Query hooks and Zod validators.
+- JWT stored in AsyncStorage; `setAuthTokenGetter` wires it into every API call automatically.
+- Role-based access: Admin sees all students; Teacher sees their assigned students; Parent sees only their children.
+- Seed runs automatically on first server startup (skipped if users already exist).
+- TanStack Query `staleTime: 5min`, `gcTime: 30min` gives offline-friendly caching out of the box.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Login screen** — role-aware login (Admin / Teacher / Parent) with demo account hints
+- **Dashboard** — at-a-glance stats: total students, present/absent today, attendance rate %, quick actions
+- **Students** — searchable student list with grade/teacher info, tap for detail view
+- **Student detail** — average score, attendance rate, recent reports and attendance in one view
+- **Reports** — filterable list (grade / assessment / attendance) with score badges
+- **Attendance** — filterable attendance log with status badges (present/absent/late)
+- **Add Report** — teacher/admin form to post grades and assessments
+- **Record Attendance** — teacher/admin form to log daily attendance
+
+## Demo accounts
+
+| Role    | Email                  | Password     |
+|---------|------------------------|--------------|
+| Admin   | admin@hamle.edu        | admin123     |
+| Teacher | teacher@hamle.edu      | teacher123   |
+| Parent  | parent@hamle.edu       | parent123    |
 
 ## User preferences
 
@@ -38,7 +65,10 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Always run `pnpm --filter @workspace/api-spec run codegen` after changing `openapi.yaml`.
+- Seed data is inserted only once (skipped if users table is non-empty).
+- `SESSION_SECRET` env var is used as the JWT signing key.
+- Do NOT run `npx expo start` directly — use `restart_workflow` tool instead.
 
 ## Pointers
 

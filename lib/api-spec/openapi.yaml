@@ -3,20 +3,28 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Hamle Elementary School Student Information System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: students
+    description: Student management
+  - name: reports
+    description: Grade and assessment reports
+  - name: attendance
+    description: Attendance tracking
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,7 +32,243 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /students:
+    get:
+      operationId: getStudents
+      tags: [students]
+      summary: Get students (filtered by role)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Student"
+
+  /students/{id}:
+    get:
+      operationId: getStudent
+      tags: [students]
+      summary: Get a single student
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Student detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reports:
+    get:
+      operationId: getReports
+      tags: [reports]
+      summary: Get all reports (admin/teacher)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+    post:
+      operationId: createReport
+      tags: [reports]
+      summary: Create a new report (teacher/admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReportRequest"
+      responses:
+        "201":
+          description: Report created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reports/student/{studentId}:
+    get:
+      operationId: getStudentReports
+      tags: [reports]
+      summary: Get reports for a specific student
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Student reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+
+  /attendance:
+    get:
+      operationId: getAttendance
+      tags: [attendance]
+      summary: Get attendance records
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Attendance records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Attendance"
+    post:
+      operationId: createAttendance
+      tags: [attendance]
+      summary: Record attendance (teacher/admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAttendanceRequest"
+      responses:
+        "201":
+          description: Attendance recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attendance"
+
+  /attendance/student/{studentId}:
+    get:
+      operationId: getStudentAttendance
+      tags: [attendance]
+      summary: Get attendance for a specific student
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Student attendance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Attendance"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [students]
+      summary: Get dashboard summary stats
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +278,223 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, teacher, parent]
+      required:
+        - id
+        - name
+        - email
+        - role
+
+    Student:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        grade:
+          type: string
+        dateOfBirth:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        teacherId:
+          type: string
+          nullable: true
+        parentName:
+          type: string
+          nullable: true
+        teacherName:
+          type: string
+          nullable: true
+        attendanceRate:
+          type: number
+          nullable: true
+        averageScore:
+          type: number
+          nullable: true
+      required:
+        - id
+        - firstName
+        - lastName
+        - grade
+        - dateOfBirth
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+        studentId:
+          type: string
+        studentName:
+          type: string
+        subject:
+          type: string
+        score:
+          type: number
+          nullable: true
+        type:
+          type: string
+          enum: [grade, assessment, attendance]
+        date:
+          type: string
+        teacherId:
+          type: string
+        teacherName:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        term:
+          type: string
+          nullable: true
+      required:
+        - id
+        - studentId
+        - studentName
+        - subject
+        - type
+        - date
+        - teacherId
+        - teacherName
+
+    CreateReportRequest:
+      type: object
+      properties:
+        studentId:
+          type: string
+        subject:
+          type: string
+        score:
+          type: number
+          nullable: true
+        type:
+          type: string
+          enum: [grade, assessment, attendance]
+        date:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        term:
+          type: string
+          nullable: true
+      required:
+        - studentId
+        - subject
+        - type
+        - date
+
+    Attendance:
+      type: object
+      properties:
+        id:
+          type: string
+        studentId:
+          type: string
+        studentName:
+          type: string
+        date:
+          type: string
+        status:
+          type: string
+          enum: [present, absent, late]
+        teacherId:
+          type: string
+        notes:
+          type: string
+          nullable: true
+      required:
+        - id
+        - studentId
+        - studentName
+        - date
+        - status
+        - teacherId
+
+    CreateAttendanceRequest:
+      type: object
+      properties:
+        studentId:
+          type: string
+        date:
+          type: string
+        status:
+          type: string
+          enum: [present, absent, late]
+        notes:
+          type: string
+          nullable: true
+      required:
+        - studentId
+        - date
+        - status
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalStudents:
+          type: integer
+        presentToday:
+          type: integer
+        absentToday:
+          type: integer
+        recentReports:
+          type: integer
+        attendanceRate:
+          type: number
+        myStudents:
+          type: integer
+          nullable: true
+      required:
+        - totalStudents
+        - presentToday
+        - absentToday
+        - recentReports
+        - attendanceRate

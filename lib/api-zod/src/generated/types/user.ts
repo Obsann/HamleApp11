@@ -5,7 +5,11 @@
  * Hamle Elementary School Student Information System API
  * OpenAPI spec version: 0.1.0
  */
+import type { UserRole } from './userRole';
 
-export interface HealthStatus {
-  status: string;
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
 }

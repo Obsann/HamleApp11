@@ -1,0 +1,175 @@
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+  Alert,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { useColors } from "@/hooks/useColors";
+import { useGetStudents, useCreateReport, getGetReportsQueryKey } from "@workspace/api-client-react";
+
+export default function AddReportScreen() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const [studentId, setStudentId] = useState("");
+  const [subject, setSubject] = useState("");
+  const [score, setScore] = useState("");
+  const [type, setType] = useState<"grade" | "assessment" | "attendance">("grade");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [notes, setNotes] = useState("");
+  const [term, setTerm] = useState("Term 1");
+
+  const { data: students } = useGetStudents();
+  const { mutate: createReport, isPending } = useCreateReport({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetReportsQueryKey() });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.back();
+      },
+      onError: () => {
+        Alert.alert("Error", "Failed to create report. Please try again.");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      },
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!studentId || !subject.trim() || !date) {
+      Alert.alert("Missing Fields", "Please select a student, enter a subject, and set the date.");
+      return;
+    }
+    createReport({
+      data: {
+        studentId,
+        subject: subject.trim(),
+        score: score ? Number(score) : null,
+        type,
+        date,
+        notes: notes.trim() || null,
+        term: term.trim() || null,
+      },
+    });
+  };
+
+  const types: Array<{ key: typeof type; label: string; color: string }> = [
+    { key: "grade", label: "Grade", color: "#1B3D7A" },
+    { key: "assessment", label: "Assessment", color: "#D97706" },
+    { key: "attendance", label: "Attendance", color: "#16A34A" },
+  ];
+
+  const top = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
+
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: insets.bottom + 40 }}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Student</Text>
+      <View style={{ backgroundColor: colors.card, borderRadius: 12, borderWidth: 1, borderColor: colors.border, marginBottom: 16 }}>
+        {!students?.length ? (
+          <Text style={{ padding: 14, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>No students available</Text>
+        ) : (
+          students.map((s) => (
+            <TouchableOpacity
+              key={s.id}
+              style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}
+              onPress={() => setStudentId(s.id)}
+            >
+              <Text style={{ fontFamily: "Inter_500Medium", color: colors.foreground, fontSize: 15 }}>{s.firstName} {s.lastName}</Text>
+              {studentId === s.id && <Feather name="check-circle" size={18} color={colors.primary} />}
+            </TouchableOpacity>
+          ))
+        )}
+      </View>
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Report Type</Text>
+      <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
+        {types.map((t) => (
+          <TouchableOpacity
+            key={t.key}
+            style={{ flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center", backgroundColor: type === t.key ? t.color : colors.secondary }}
+            onPress={() => setType(t.key)}
+          >
+            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: type === t.key ? "#fff" : colors.foreground }}>{t.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Subject</Text>
+      <TextInput
+        style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
+        value={subject}
+        onChangeText={setSubject}
+        placeholder="e.g. Mathematics, Amharic"
+        placeholderTextColor={colors.mutedForeground}
+      />
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Score (optional)</Text>
+      <TextInput
+        style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
+        value={score}
+        onChangeText={setScore}
+        placeholder="0–100"
+        placeholderTextColor={colors.mutedForeground}
+        keyboardType="numeric"
+      />
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Date (YYYY-MM-DD)</Text>
+      <TextInput
+        style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
+        value={date}
+        onChangeText={setDate}
+        placeholder="2025-01-01"
+        placeholderTextColor={colors.mutedForeground}
+      />
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Term</Text>
+      <TextInput
+        style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
+        value={term}
+        onChangeText={setTerm}
+        placeholder="Term 1"
+        placeholderTextColor={colors.mutedForeground}
+      />
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Notes (optional)</Text>
+      <TextInput
+        style={{ height: 90, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, paddingTop: 14, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 24, textAlignVertical: "top" }}
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="Additional notes..."
+        placeholderTextColor={colors.mutedForeground}
+        multiline
+        numberOfLines={3}
+      />
+
+      <TouchableOpacity
+        style={{ height: 54, backgroundColor: colors.primary, borderRadius: 14, alignItems: "center", justifyContent: "center", opacity: isPending ? 0.6 : 1 }}
+        onPress={handleSubmit}
+        disabled={isPending}
+      >
+        {isPending ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: "#fff" }}>Save Report</Text>
+        )}
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
