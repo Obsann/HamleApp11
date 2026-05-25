@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
   FlatList,
-  StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
   Platform,
@@ -16,8 +15,19 @@ import * as Haptics from "expo-haptics";
 
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
-import { useGetReports } from "@workspace/api-client-react";
+import { useGetReports, useGetStudents } from "@workspace/api-client-react";
 import type { Report } from "@workspace/api-client-react";
+
+const GRADES = [
+  "Grade 1", "Grade 2", "Grade 3", "Grade 4",
+  "Grade 5", "Grade 6", "Grade 7", "Grade 8",
+];
+
+const TYPE_FILTERS = [
+  { key: "all" as const, label: "All" },
+  { key: "grade" as const, label: "Grades" },
+  { key: "assessment" as const, label: "Assessments" },
+];
 
 const TYPE_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   grade: { bg: "#E8EEF8", text: "#1B3D7A", label: "Grade" },
@@ -25,135 +35,227 @@ const TYPE_COLORS: Record<string, { bg: string; text: string; label: string }> =
   attendance: { bg: "#DCFCE7", text: "#16A34A", label: "Attendance" },
 };
 
+const CHART_COLORS = ["#1B3D7A", "#7C3AED", "#16A34A", "#D97706", "#DC2626", "#0891B2"];
+
 function ReportCard({ report }: { report: Report }) {
   const colors = useColors();
   const typeInfo = TYPE_COLORS[report.type] ?? TYPE_COLORS["grade"];
-
   return (
-    <View style={[cardStyles.card, { backgroundColor: colors.card }]}>
-      <View style={cardStyles.header}>
-        <Text style={[cardStyles.studentName, { color: colors.foreground }]}>{report.studentName}</Text>
-        <View style={[cardStyles.typeBadge, { backgroundColor: typeInfo.bg }]}>
-          <Text style={[cardStyles.typeBadgeText, { color: typeInfo.text }]}>{typeInfo.label}</Text>
+    <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+        <Text style={{ fontSize: 16, fontFamily: "Inter_600SemiBold", color: colors.foreground, flex: 1 }}>{report.studentName}</Text>
+        <View style={{ borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: typeInfo.bg }}>
+          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: typeInfo.text }}>{typeInfo.label}</Text>
         </View>
       </View>
-      <Text style={[cardStyles.subject, { color: colors.mutedForeground }]}>{report.subject}</Text>
-      <View style={cardStyles.footer}>
+      <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginBottom: 10 }}>{report.subject}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         {report.score != null && (
-          <View style={[cardStyles.scoreBadge, { backgroundColor: colors.primary }]}>
-            <Text style={cardStyles.scoreText}>{report.score}</Text>
+          <View style={{ borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: colors.primary }}>
+            <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" }}>{report.score}</Text>
           </View>
         )}
-        <Text style={[cardStyles.date, { color: colors.mutedForeground }]}>{report.date}</Text>
-        {report.term && <Text style={[cardStyles.term, { color: colors.mutedForeground }]}>{report.term}</Text>}
+        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{report.date}</Text>
+        {report.term && <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>{report.term}</Text>}
       </View>
       {report.notes && (
-        <Text style={[cardStyles.notes, { color: colors.mutedForeground }]} numberOfLines={2}>{report.notes}</Text>
+        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 8 }} numberOfLines={2}>{report.notes}</Text>
       )}
     </View>
   );
 }
 
-const cardStyles = StyleSheet.create({
-  card: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
-  studentName: { fontSize: 16, fontFamily: "Inter_600SemiBold", flex: 1 },
-  typeBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  typeBadgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  subject: { fontSize: 14, fontFamily: "Inter_400Regular", marginBottom: 10 },
-  footer: { flexDirection: "row", alignItems: "center", gap: 10 },
-  scoreBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  scoreText: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" },
-  date: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  term: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  notes: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 8 },
-});
+function SubjectChart({ reports }: { reports: Report[] }) {
+  const colors = useColors();
+  const stats = useMemo(() => {
+    const bySubject = new Map<string, { total: number; count: number }>();
+    reports.forEach((r) => {
+      if (r.score != null) {
+        const curr = bySubject.get(r.subject) ?? { total: 0, count: 0 };
+        bySubject.set(r.subject, { total: curr.total + r.score, count: curr.count + 1 });
+      }
+    });
+    return Array.from(bySubject.entries())
+      .map(([subject, { total, count }]) => ({ subject, avg: Math.round(total / count) }))
+      .sort((a, b) => b.avg - a.avg)
+      .slice(0, 6);
+  }, [reports]);
+
+  if (stats.length === 0) return null;
+
+  return (
+    <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
+      <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground, marginBottom: 14 }}>Subject Performance</Text>
+      {stats.map(({ subject, avg }, i) => (
+        <View key={subject} style={{ marginBottom: i < stats.length - 1 ? 12 : 0 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 5 }}>
+            <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.foreground, flex: 1 }} numberOfLines={1}>{subject}</Text>
+            <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: CHART_COLORS[i % CHART_COLORS.length], marginLeft: 8 }}>{avg}</Text>
+          </View>
+          <View style={{ height: 8, backgroundColor: colors.secondary, borderRadius: 4, overflow: "hidden" }}>
+            <View style={{ height: 8, width: `${avg}%` as any, backgroundColor: CHART_COLORS[i % CHART_COLORS.length], borderRadius: 4 }} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 export default function ReportsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-  const [filter, setFilter] = useState<"all" | "grade" | "assessment" | "attendance">("all");
+  const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<"all" | "grade" | "assessment">("all");
 
-  const { data: reports, isLoading, refetch, isRefetching } = useGetReports();
+  const { data: reports, isLoading: loadingReports, refetch, isRefetching } = useGetReports();
+  const { data: students } = useGetStudents();
 
-  const filtered = (reports ?? []).filter((r) => filter === "all" || r.type === filter);
   const isTeacherOrAdmin = user?.role === "admin" || user?.role === "teacher";
   const top = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
 
-  const filters: Array<{ key: typeof filter; label: string }> = [
-    { key: "all", label: "All" },
-    { key: "grade", label: "Grades" },
-    { key: "assessment", label: "Assessments" },
-    { key: "attendance", label: "Attendance" },
-  ];
+  const studentGradeMap = useMemo(() => {
+    const map = new Map<string, string>();
+    students?.forEach((s) => map.set(s.id, s.grade));
+    return map;
+  }, [students]);
 
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={{ paddingTop: top + 16, paddingHorizontal: 20, paddingBottom: 8 }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: colors.foreground }}>Reports</Text>
-          {isTeacherOrAdmin && (
-            <TouchableOpacity
-              style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6 }}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/add-report"); }}
-            >
-              <Feather name="plus" size={16} color="#fff" />
-              <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Add</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+  const gradeReports = useMemo(() => {
+    if (!selectedGrade) return reports ?? [];
+    return (reports ?? []).filter((r) => studentGradeMap.get(r.studentId) === selectedGrade);
+  }, [reports, selectedGrade, studentGradeMap]);
 
-        <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
-          {filters.map((f) => (
-            <TouchableOpacity
-              key={f.key}
-              style={{
-                paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-                backgroundColor: filter === f.key ? colors.primary : colors.secondary,
-              }}
-              onPress={() => setFilter(f.key)}
-            >
-              <Text style={{
-                fontSize: 13, fontFamily: "Inter_600SemiBold",
-                color: filter === f.key ? "#fff" : colors.foreground,
-              }}>{f.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+  const filteredReports = useMemo(() => {
+    if (typeFilter === "all") return gradeReports;
+    return gradeReports.filter((r) => r.type === typeFilter);
+  }, [gradeReports, typeFilter]);
+
+  const gradeReportCount = useMemo(() => {
+    const map = new Map<string, number>();
+    (reports ?? []).forEach((r) => {
+      const g = studentGradeMap.get(r.studentId);
+      if (g) map.set(g, (map.get(g) ?? 0) + 1);
+    });
+    return map;
+  }, [reports, studentGradeMap]);
+
+  const ListHeader = (
+    <View style={{ paddingTop: top + 16, paddingHorizontal: 20 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: colors.foreground }}>Reports</Text>
+        {isTeacherOrAdmin && (
+          <TouchableOpacity
+            style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6 }}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/add-report"); }}
+          >
+            <Feather name="plus" size={16} color="#fff" />
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Add</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {isLoading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <ReportCard report={item} />}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 100 }}
-          ListEmptyComponent={
-            <View style={{ alignItems: "center", marginTop: 60 }}>
-              <Feather name="file-text" size={40} color={colors.mutedForeground} />
-              <Text style={{ fontSize: 16, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginTop: 12 }}>
-                No reports found
+      <SubjectChart reports={gradeReports} />
+
+      <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground, marginBottom: 10 }}>By Grade</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+        <TouchableOpacity
+          style={{
+            paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+            backgroundColor: selectedGrade === null ? colors.primary : colors.secondary,
+          }}
+          onPress={() => { setSelectedGrade(null); setTypeFilter("all"); }}
+        >
+          <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: selectedGrade === null ? "#fff" : colors.foreground }}>
+            All Grades
+          </Text>
+        </TouchableOpacity>
+        {GRADES.map((g) => {
+          const count = gradeReportCount.get(g) ?? 0;
+          const isSelected = selectedGrade === g;
+          return (
+            <TouchableOpacity
+              key={g}
+              style={{
+                paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+                backgroundColor: isSelected ? colors.primary : colors.secondary,
+                opacity: count === 0 ? 0.45 : 1,
+              }}
+              onPress={() => {
+                if (count > 0) {
+                  setSelectedGrade(isSelected ? null : g);
+                  setTypeFilter("all");
+                }
+              }}
+              disabled={count === 0}
+            >
+              <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: isSelected ? "#fff" : colors.foreground }}>
+                {g.replace("Grade ", "G")}
+                {count > 0 ? ` · ${count}` : ""}
               </Text>
-            </View>
-          }
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-          scrollEnabled={!!filtered.length}
-          showsVerticalScrollIndicator={false}
-        />
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
+        {TYPE_FILTERS.map((f) => (
+          <TouchableOpacity
+            key={f.key}
+            style={{
+              paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+              backgroundColor: typeFilter === f.key ? colors.primary : colors.secondary,
+            }}
+            onPress={() => setTypeFilter(f.key)}
+          >
+            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: typeFilter === f.key ? "#fff" : colors.foreground }}>
+              {f.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {selectedGrade && (
+        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 }}>
+          <Feather name="filter" size={14} color={colors.primary} />
+          <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.primary }}>
+            Showing: {selectedGrade}
+          </Text>
+          <TouchableOpacity onPress={() => { setSelectedGrade(null); setTypeFilter("all"); }}>
+            <Feather name="x-circle" size={15} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
       )}
     </View>
+  );
+
+  if (loadingReports) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        {ListHeader}
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      style={{ flex: 1, backgroundColor: colors.background }}
+      data={filteredReports}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => <ReportCard report={item} />}
+      ListHeaderComponent={ListHeader}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 100 }}
+      ListEmptyComponent={
+        <View style={{ alignItems: "center", marginTop: 40 }}>
+          <Feather name="file-text" size={40} color={colors.mutedForeground} />
+          <Text style={{ fontSize: 16, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginTop: 12 }}>
+            No reports found
+          </Text>
+        </View>
+      }
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+      showsVerticalScrollIndicator={false}
+    />
   );
 }

@@ -16,6 +16,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
 import { useGetStudents } from "@workspace/api-client-react";
 import type { Student } from "@workspace/api-client-react";
 
@@ -81,9 +82,12 @@ export default function StudentsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
 
   const { data: students, isLoading, refetch, isRefetching } = useGetStudents();
+
+  const isAdmin = user?.role === "admin";
 
   const filtered = students?.filter((s) => {
     const q = search.toLowerCase();
@@ -99,9 +103,31 @@ export default function StudentsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ paddingTop: top + 16, paddingHorizontal: 20, paddingBottom: 8 }}>
-        <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: colors.foreground, marginBottom: 16 }}>
-          Students
-        </Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: colors.foreground }}>
+            Students
+          </Text>
+          {isAdmin && (
+            <TouchableOpacity
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+              }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/add-student");
+              }}
+            >
+              <Feather name="plus" size={16} color="#fff" />
+              <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Add Student</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={{
           flexDirection: "row", alignItems: "center",
           backgroundColor: colors.card, borderRadius: 12,
@@ -133,7 +159,7 @@ export default function StudentsScreen() {
           renderItem={({ item }) => (
             <StudentCard
               student={item}
-              onPress={() => router.push(`/student/${item.id}`)}
+              onPress={() => router.push(`/student/${item.id}` as any)}
             />
           )}
           contentContainerStyle={{
@@ -149,7 +175,6 @@ export default function StudentsScreen() {
             </View>
           }
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-          scrollEnabled={!!filtered.length}
           showsVerticalScrollIndicator={false}
         />
       )}

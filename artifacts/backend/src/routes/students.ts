@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { StudentModel, UserModel } from "@workspace/db";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
@@ -32,6 +32,35 @@ router.get("/students", requireAuth, async (req, res): Promise<void> => {
   );
 
   res.json(enriched);
+});
+
+router.post("/students", requireAuth, requireRole("admin"), async (req, res): Promise<void> => {
+  try {
+    const { firstName, lastName, grade, dateOfBirth, parentId, teacherId } = req.body;
+    if (!firstName?.trim() || !lastName?.trim() || !grade?.trim() || !dateOfBirth?.trim()) {
+      res.status(400).json({ message: "firstName, lastName, grade, and dateOfBirth are required" });
+      return;
+    }
+    const student = await StudentModel.create({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      grade: grade.trim(),
+      dateOfBirth: dateOfBirth.trim(),
+      parentId: parentId || null,
+      teacherId: teacherId || null,
+    });
+    const parent = student.parentId ? await UserModel.findById(student.parentId).select("name") : null;
+    const teacher = student.teacherId ? await UserModel.findById(student.teacherId).select("name") : null;
+    res.status(201).json({
+      ...student.toJSON(),
+      parentName: parent?.name ?? null,
+      teacherName: teacher?.name ?? null,
+      attendanceRate: null,
+      averageScore: null,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to create student" });
+  }
 });
 
 router.get("/students/:id", requireAuth, async (req, res): Promise<void> => {

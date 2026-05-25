@@ -60,18 +60,25 @@ router.post(
   requireAuth,
   requireRole("admin", "teacher"),
   async (req, res): Promise<void> => {
-    const parsed = CreateReportBody.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ message: parsed.error.message });
-      return;
+    try {
+      const parsed = CreateReportBody.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ message: "Invalid report data", errors: parsed.error.flatten() });
+        return;
+      }
+      if (!parsed.data.studentId) {
+        res.status(400).json({ message: "studentId is required" });
+        return;
+      }
+      const report = await ReportModel.create({
+        ...parsed.data,
+        teacherId: req.user!.userId,
+      });
+      const enriched = await enrichReport(report);
+      res.status(201).json(enriched);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to create report" });
     }
-
-    const report = await ReportModel.create({
-      ...parsed.data,
-      teacherId: req.user!.userId,
-    });
-    const enriched = await enrichReport(report);
-    res.status(201).json(enriched);
   }
 );
 
