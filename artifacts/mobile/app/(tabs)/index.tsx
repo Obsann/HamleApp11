@@ -202,6 +202,16 @@ export default function DashboardScreen() {
                 </TouchableOpacity>
               </>
             )}
+            {user?.role === "admin" && (
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: "#0F766E" }]}
+                onPress={() => router.push("/(tabs)/users")}
+                activeOpacity={0.85}
+              >
+                <Feather name="shield" size={22} color="#fff" />
+                <Text style={styles.actionBtnText}>Manage Users</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </>
       )}

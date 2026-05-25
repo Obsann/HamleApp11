@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, attendanceTable, studentsTable, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { requireAuth, requireRole } from "../middlewares/auth";
 import { CreateAttendanceBody } from "@workspace/api-zod";
 
@@ -47,7 +47,7 @@ router.get("/attendance", requireAuth, async (req, res): Promise<void> => {
     rows = await db
       .select()
       .from(attendanceTable)
-      .where(eq(attendanceTable.studentId, ids[0]))
+      .where(inArray(attendanceTable.studentId, ids))
       .orderBy(attendanceTable.date);
   }
 

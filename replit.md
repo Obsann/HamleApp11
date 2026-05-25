@@ -42,22 +42,39 @@ A mobile Student Information System for Hamle Elementary School — built with E
 
 ## Product
 
-- **Login screen** — role-aware login (Admin / Teacher / Parent) with demo account hints
-- **Dashboard** — at-a-glance stats: total students, present/absent today, attendance rate %, quick actions
-- **Students** — searchable student list with grade/teacher info, tap for detail view
+- **Login screen** — role-aware login with demo account hints
+- **Dashboard** — at-a-glance stats, role-aware quick actions (Admin gets "Manage Users")
+- **Students** — searchable list; Admin sees all, Teacher sees assigned class, Parent sees own children only
 - **Student detail** — average score, attendance rate, recent reports and attendance in one view
-- **Reports** — filterable list (grade / assessment / attendance) with score badges
-- **Attendance** — filterable attendance log with status badges (present/absent/late)
+- **Reports** — filterable (grade / assessment / attendance); all roles can view, only Teacher/Admin can add
+- **Attendance** — filterable log; all roles can view, only Teacher/Admin can record
 - **Add Report** — teacher/admin form to post grades and assessments
 - **Record Attendance** — teacher/admin form to log daily attendance
+- **Manage Users (Admin only)** — Users tab: list/filter teachers & parents, add new users, edit credentials, delete accounts
+
+## Role privileges
+
+| Feature                  | Admin | Teacher | Parent |
+|--------------------------|:-----:|:-------:|:------:|
+| View all students        | ✅    | —       | —      |
+| View assigned students   | ✅    | ✅      | —      |
+| View own children        | ✅    | —       | ✅     |
+| Add reports              | ✅    | ✅      | —      |
+| Record attendance        | ✅    | ✅      | —      |
+| Manage users (CRUD)      | ✅    | —       | —      |
 
 ## Demo accounts
 
-| Role    | Email                  | Password     |
-|---------|------------------------|--------------|
-| Admin   | admin@hamle.edu        | admin123     |
-| Teacher | teacher@hamle.edu      | teacher123   |
-| Parent  | parent@hamle.edu       | parent123    |
+| Role    | Email                   | Password     |
+|---------|-------------------------|--------------|
+| Admin   | admin@hamle.edu         | admin123     |
+| Teacher | teacher@hamle.edu       | teacher123   |
+| Teacher | teacher2@hamle.edu      | teacher123   |
+| Teacher | teacher3@hamle.edu      | teacher123   |
+| Parent  | parent@hamle.edu        | parent123    |
+| Parent  | parent2@hamle.edu       | parent123    |
+
+Seed data: 12 students across 3 grade levels (Grade 2/3/4), 2 weeks of daily attendance, reports across 5 subjects.
 
 ## User preferences
 

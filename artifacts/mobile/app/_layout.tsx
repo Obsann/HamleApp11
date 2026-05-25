@@ -68,6 +68,14 @@ function RootLayoutNav() {
           name="add-attendance"
           options={{ headerShown: true, title: "Record Attendance", headerBackTitle: "Back", presentation: "modal" }}
         />
+        <Stack.Screen
+          name="add-user"
+          options={{ headerShown: true, title: "Add User", headerBackTitle: "Back", presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="edit-user"
+          options={{ headerShown: true, title: "Edit User", headerBackTitle: "Back" }}
+        />
       </Stack>
     </>
   );

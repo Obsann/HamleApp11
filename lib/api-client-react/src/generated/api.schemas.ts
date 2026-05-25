@@ -39,6 +39,53 @@ export interface AuthLoginResponse {
   user: User;
 }
 
+export type UserDetailRole = typeof UserDetailRole[keyof typeof UserDetailRole];
+
+
+export const UserDetailRole = {
+  admin: 'admin',
+  teacher: 'teacher',
+  parent: 'parent',
+} as const;
+
+export interface UserDetail {
+  id: string;
+  name: string;
+  email: string;
+  role: UserDetailRole;
+  studentCount: number;
+}
+
+export type CreateUserRequestRole = typeof CreateUserRequestRole[keyof typeof CreateUserRequestRole];
+
+
+export const CreateUserRequestRole = {
+  teacher: 'teacher',
+  parent: 'parent',
+} as const;
+
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  role: CreateUserRequestRole;
+}
+
+export type UpdateUserRequestRole = typeof UpdateUserRequestRole[keyof typeof UpdateUserRequestRole];
+
+
+export const UpdateUserRequestRole = {
+  teacher: 'teacher',
+  parent: 'parent',
+} as const;
+
+export interface UpdateUserRequest {
+  name: string;
+  email: string;
+  password?: string | null;
+  role: UpdateUserRequestRole;
+}
+
 export interface Student {
   id: string;
   firstName: string;
@@ -138,4 +185,16 @@ export interface DashboardSummary {
   attendanceRate: number;
   myStudents?: number | null;
 }
+
+export type GetUsersParams = {
+role?: GetUsersRole;
+};
+
+export type GetUsersRole = typeof GetUsersRole[keyof typeof GetUsersRole];
+
+
+export const GetUsersRole = {
+  teacher: 'teacher',
+  parent: 'parent',
+} as const;
 

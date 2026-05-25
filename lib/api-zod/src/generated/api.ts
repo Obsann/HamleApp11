@@ -88,7 +88,7 @@ export const GetStudentResponse = zod.object({
 
 
 /**
- * @summary Get all reports (admin/teacher)
+ * @summary Get all reports (role-filtered)
  */
 export const GetReportsResponseItem = zod.object({
   "id": zod.string(),
@@ -144,7 +144,7 @@ export const GetStudentReportsResponse = zod.array(GetStudentReportsResponseItem
 
 
 /**
- * @summary Get attendance records
+ * @summary Get attendance records (role-filtered)
  */
 export const GetAttendanceResponseItem = zod.object({
   "id": zod.string(),
@@ -198,6 +198,81 @@ export const GetDashboardSummaryResponse = zod.object({
   "recentReports": zod.number(),
   "attendanceRate": zod.number(),
   "myStudents": zod.number().nullish()
+})
+
+
+/**
+ * @summary List all users (admin only)
+ */
+export const GetUsersQueryParams = zod.object({
+  "role": zod.enum(['teacher', 'parent']).optional()
+})
+
+export const GetUsersResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.enum(['admin', 'teacher', 'parent']),
+  "studentCount": zod.number()
+})
+export const GetUsersResponse = zod.array(GetUsersResponseItem)
+
+
+/**
+ * @summary Create a new teacher or parent (admin only)
+ */
+export const CreateUserBody = zod.object({
+  "name": zod.string(),
+  "email": zod.string().email(),
+  "password": zod.string(),
+  "role": zod.enum(['teacher', 'parent'])
+})
+
+
+/**
+ * @summary Get a single user (admin only)
+ */
+export const GetUserParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetUserResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.enum(['admin', 'teacher', 'parent']),
+  "studentCount": zod.number()
+})
+
+
+/**
+ * @summary Update a user (admin only)
+ */
+export const UpdateUserParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateUserBody = zod.object({
+  "name": zod.string(),
+  "email": zod.string().email(),
+  "password": zod.string().nullish(),
+  "role": zod.enum(['teacher', 'parent'])
+})
+
+export const UpdateUserResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.enum(['admin', 'teacher', 'parent']),
+  "studentCount": zod.number()
+})
+
+
+/**
+ * @summary Delete a user (admin only)
+ */
+export const DeleteUserParams = zod.object({
+  "id": zod.coerce.string()
 })
 
 

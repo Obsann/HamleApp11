@@ -15,6 +15,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
 import { useGetAttendance } from "@workspace/api-client-react";
 import type { Attendance } from "@workspace/api-client-react";
 
@@ -78,6 +79,8 @@ export default function AttendanceScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user } = useAuth();
+  const isTeacherOrAdmin = user?.role === "admin" || user?.role === "teacher";
   const [filter, setFilter] = useState<"all" | "present" | "absent" | "late">("all");
 
   const { data: attendance, isLoading, refetch, isRefetching } = useGetAttendance();
@@ -97,13 +100,15 @@ export default function AttendanceScreen() {
       <View style={{ paddingTop: top + 16, paddingHorizontal: 20, paddingBottom: 8 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: colors.foreground }}>Attendance</Text>
-          <TouchableOpacity
-            style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6 }}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/add-attendance"); }}
-          >
-            <Feather name="plus" size={16} color="#fff" />
-            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Record</Text>
-          </TouchableOpacity>
+          {isTeacherOrAdmin && (
+            <TouchableOpacity
+              style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6 }}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/add-attendance"); }}
+            >
+              <Feather name="plus" size={16} color="#fff" />
+              <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Record</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
