@@ -11,6 +11,7 @@ export interface Attendance {
   id: string;
   studentId: string;
   studentName: string;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
   date: string;
   status: AttendanceStatus;
   teacherId: string;

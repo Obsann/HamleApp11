@@ -32,6 +32,10 @@ export default function AddReportScreen() {
   const [studentId, setStudentId] = useState("");
   const [subject, setSubject] = useState("");
   const [score, setScore] = useState("");
+  const [midExam, setMidExam] = useState("");
+  const [tests, setTests] = useState("");
+  const [continuousAssessment, setContinuousAssessment] = useState("");
+  const [finalExam, setFinalExam] = useState("");
   const [type, setType] = useState<"grade" | "assessment">("grade");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
@@ -53,6 +57,18 @@ export default function AddReportScreen() {
     },
   });
 
+  // --- Validation helpers ---
+  const SUBJECT_REGEX = /^[a-zA-Z\u1200-\u137F\s]+$/;
+
+  const isValidDate = (dateStr: string): boolean => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const dt = new Date(y!, m! - 1, d);
+    return dt.getFullYear() === y && dt.getMonth() === m! - 1 && dt.getDate() === d;
+  };
+
+  const handleSubjectChange = (text: string) => setSubject(text.replace(/[0-9]/g, ""));
+
   const handleSubmit = () => {
     if (!studentId) {
       Alert.alert("Missing Fields", "Please select a student.");
@@ -62,8 +78,16 @@ export default function AddReportScreen() {
       Alert.alert("Missing Fields", "Please enter a subject.");
       return;
     }
+    if (!SUBJECT_REGEX.test(subject.trim())) {
+      Alert.alert("Invalid Subject", "Subject name must contain only letters (no numbers).");
+      return;
+    }
     if (!date) {
       Alert.alert("Missing Fields", "Please set the date.");
+      return;
+    }
+    if (!isValidDate(date.trim())) {
+      Alert.alert("Invalid Date", "Date must be a valid date in YYYY-MM-DD format.");
       return;
     }
     const scoreNum = score.trim() ? Number(score.trim()) : undefined;
@@ -71,11 +95,46 @@ export default function AddReportScreen() {
       Alert.alert("Invalid Score", "Score must be a number between 0 and 100.");
       return;
     }
+
+    const midVal = midExam.trim() ? Number(midExam.trim()) : 0;
+    const testVal = tests.trim() ? Number(tests.trim()) : 0;
+    const caVal = continuousAssessment.trim() ? Number(continuousAssessment.trim()) : 0;
+    const finalVal = finalExam.trim() ? Number(finalExam.trim()) : 0;
+
+    if (type === "grade") {
+      if (isNaN(midVal) || midVal < 0 || midVal > 100) {
+        Alert.alert("Invalid Score", "Mid Exam must be a number between 0 and 100.");
+        return;
+      }
+      if (isNaN(testVal) || testVal < 0 || testVal > 100) {
+        Alert.alert("Invalid Score", "Tests must be a number between 0 and 100.");
+        return;
+      }
+      if (isNaN(caVal) || caVal < 0 || caVal > 100) {
+        Alert.alert("Invalid Score", "Continuous Assessment must be a number between 0 and 100.");
+        return;
+      }
+      if (isNaN(finalVal) || finalVal < 0 || finalVal > 100) {
+        Alert.alert("Invalid Score", "Final Exam must be a number between 0 and 100.");
+        return;
+      }
+      // Total of all sub-scores must not exceed 100
+      const total = midVal + testVal + caVal + finalVal;
+      if (total > 100) {
+        Alert.alert("Invalid Total", `The total of all sub-scores (${total}) exceeds 100. Please adjust the scores.`);
+        return;
+      }
+    }
+
     createReport({
       data: {
         studentId,
         subject: subject.trim(),
-        score: scoreNum ?? null,
+        score: type === "grade" ? (midVal + testVal + caVal + finalVal) : (scoreNum ?? null),
+        midExam: type === "grade" ? midVal : null,
+        tests: type === "grade" ? testVal : null,
+        continuousAssessment: type === "grade" ? caVal : null,
+        finalExam: type === "grade" ? finalVal : null,
         type,
         date,
         notes: notes.trim() || null,
@@ -152,20 +211,88 @@ export default function AddReportScreen() {
       <TextInput
         style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
         value={subject}
-        onChangeText={setSubject}
+        onChangeText={handleSubjectChange}
         placeholder="e.g. Mathematics, Amharic, Science"
         placeholderTextColor={colors.mutedForeground}
+        maxLength={60}
       />
 
-      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Score (0–100, optional)</Text>
-      <TextInput
-        style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
-        value={score}
-        onChangeText={setScore}
-        placeholder="e.g. 85"
-        placeholderTextColor={colors.mutedForeground}
-        keyboardType="numeric"
-      />
+      {type === "grade" ? (
+        <>
+          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Mid Exam Score</Text>
+          <TextInput
+            style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
+            value={midExam}
+            onChangeText={setMidExam}
+            placeholder="e.g. 15"
+            placeholderTextColor={colors.mutedForeground}
+            keyboardType="number-pad"
+            maxLength={3}
+          />
+
+          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Tests Score</Text>
+          <TextInput
+            style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
+            value={tests}
+            onChangeText={setTests}
+            placeholder="e.g. 8"
+            placeholderTextColor={colors.mutedForeground}
+            keyboardType="number-pad"
+            maxLength={3}
+          />
+
+          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Continuous Assessment Score</Text>
+          <TextInput
+            style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
+            value={continuousAssessment}
+            onChangeText={setContinuousAssessment}
+            placeholder="e.g. 18"
+            placeholderTextColor={colors.mutedForeground}
+            keyboardType="number-pad"
+            maxLength={3}
+          />
+
+          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Final Exam Score</Text>
+          <TextInput
+            style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
+            value={finalExam}
+            onChangeText={setFinalExam}
+            placeholder="e.g. 45"
+            placeholderTextColor={colors.mutedForeground}
+            keyboardType="number-pad"
+            maxLength={3}
+          />
+
+          {/* Real-time sum calculation */}
+          {(() => {
+            const sum = (Number(midExam) || 0) + (Number(tests) || 0) + (Number(continuousAssessment) || 0) + (Number(finalExam) || 0);
+            const isPass = sum >= 50;
+            return (
+              <View style={{ backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, padding: 16, marginBottom: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <View>
+                  <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground }}>Calculated Total Score</Text>
+                  <Text style={{ fontSize: 24, fontFamily: "Inter_700Bold", color: colors.foreground, marginTop: 4 }}>{sum} / 100</Text>
+                </View>
+                <View style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8, backgroundColor: isPass ? "#D1FAE5" : "#FEE2E2" }}>
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: isPass ? "#065F46" : "#991B1B" }}>{isPass ? "PASS" : "FAIL"}</Text>
+                </View>
+              </View>
+            );
+          })()}
+        </>
+      ) : (
+        <>
+          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Score (0–100, optional)</Text>
+          <TextInput
+            style={{ height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, backgroundColor: colors.card, marginBottom: 16 }}
+            value={score}
+            onChangeText={setScore}
+            placeholder="e.g. 85"
+            placeholderTextColor={colors.mutedForeground}
+            keyboardType="numeric"
+          />
+        </>
+      )}
 
       <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Date (YYYY-MM-DD) *</Text>
       <TextInput
@@ -174,6 +301,8 @@ export default function AddReportScreen() {
         onChangeText={setDate}
         placeholder="2025-01-01"
         placeholderTextColor={colors.mutedForeground}
+        maxLength={10}
+        keyboardType="numbers-and-punctuation"
       />
 
       <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Term</Text>

@@ -1,6 +1,5 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
   description: Hamle Elementary School Student Information System API
@@ -20,6 +19,8 @@ tags:
     description: Attendance tracking
   - name: users
     description: User management (admin only)
+  - name: announcements
+    description: School announcements
 
 paths:
   /healthz:
@@ -81,6 +82,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change authenticated user's password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "200":
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Incorrect current password or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /students:
     get:
       operationId: getStudents
@@ -97,6 +125,31 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Student"
+    post:
+      operationId: createStudent
+      tags: [students]
+      summary: Create a new student (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStudentRequest"
+      responses:
+        "201":
+          description: Student created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /students/{id}:
     get:
@@ -118,6 +171,58 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Student"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateStudent
+      tags: [students]
+      summary: Update a student (admin/teacher)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStudentRequest"
+      responses:
+        "200":
+          description: Student updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteStudent
+      tags: [students]
+      summary: Delete a student (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Student deleted
         "404":
           description: Not found
           content:
@@ -162,6 +267,60 @@ paths:
                 $ref: "#/components/schemas/Report"
         "400":
           description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reports/{id}:
+    put:
+      operationId: updateReport
+      tags: [reports]
+      summary: Update a report (teacher/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReportRequest"
+      responses:
+        "200":
+          description: Report updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteReport
+      tags: [reports]
+      summary: Delete a report (teacher/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Report deleted
+        "404":
+          description: Not found
           content:
             application/json:
               schema:
@@ -225,6 +384,66 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Attendance"
+        "409":
+          description: Attendance already exists for date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /attendance/{id}:
+    put:
+      operationId: updateAttendance
+      tags: [attendance]
+      summary: Update attendance record (teacher/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAttendanceRequest"
+      responses:
+        "200":
+          description: Attendance record updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attendance"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteAttendance
+      tags: [attendance]
+      summary: Delete attendance record (teacher/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Attendance record deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /attendance/student/{studentId}:
     get:
@@ -410,6 +629,84 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /announcements:
+    get:
+      operationId: getAnnouncements
+      tags: [announcements]
+      summary: Get announcements (role-filtered)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+    post:
+      operationId: createAnnouncement
+      tags: [announcements]
+      summary: Create a new announcement (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnnouncementRequest"
+      responses:
+        "201":
+          description: Announcement created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+  /announcements/{id}:
+    put:
+      operationId: updateAnnouncement
+      tags: [announcements]
+      summary: Update an announcement (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAnnouncementRequest"
+      responses:
+        "200":
+          description: Announcement updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+    delete:
+      operationId: deleteAnnouncement
+      tags: [announcements]
+      summary: Delete an announcement (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Announcement deleted
+
 components:
   securitySchemes:
     bearerAuth:
@@ -434,6 +731,14 @@ components:
       required:
         - message
 
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
     LoginRequest:
       type: object
       properties:
@@ -445,6 +750,17 @@ components:
       required:
         - email
         - password
+
+    ChangePasswordRequest:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+      required:
+        - currentPassword
+        - newPassword
 
     AuthLoginResponse:
       type: object
@@ -534,19 +850,60 @@ components:
         - email
         - role
 
+    Address:
+      type: object
+      properties:
+        region:
+          type: string
+        zone:
+          type: string
+        kebele:
+          type: string
+        houseNo:
+          type: string
+      required:
+        - region
+        - zone
+        - kebele
+        - houseNo
+
     Student:
       type: object
       properties:
         id:
           type: string
+        studentNo:
+          type: string
         firstName:
           type: string
+          pattern: '^[a-zA-Z\s]+$'
         lastName:
           type: string
+          pattern: '^[a-zA-Z\s]+$'
         grade:
           type: string
         dateOfBirth:
           type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+        gender:
+          type: string
+          enum: [male, female]
+        address:
+          $ref: '#/components/schemas/Address'
+          nullable: true
+        faydaId:
+          type: string
+          pattern: '^[0-9]{12}$'
+          nullable: true
+        enrollmentStatus:
+          type: string
+          enum: [active, inactive, withdrawn, transferred, graduated]
+        medicalInfo:
+          type: string
+          nullable: true
+        emergencyContact:
+          type: string
+          nullable: true
         parentId:
           type: string
           nullable: true
@@ -567,10 +924,98 @@ components:
           nullable: true
       required:
         - id
+        - studentNo
         - firstName
         - lastName
         - grade
         - dateOfBirth
+        - gender
+        - enrollmentStatus
+
+    CreateStudentRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          pattern: '^[a-zA-Z\s]+$'
+        lastName:
+          type: string
+          pattern: '^[a-zA-Z\s]+$'
+        grade:
+          type: string
+        dateOfBirth:
+          type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+        gender:
+          type: string
+          enum: [male, female]
+        address:
+          $ref: '#/components/schemas/Address'
+          nullable: true
+        faydaId:
+          type: string
+          pattern: '^[0-9]{12}$'
+          nullable: true
+        enrollmentStatus:
+          type: string
+          enum: [active, inactive, withdrawn, transferred, graduated]
+        medicalInfo:
+          type: string
+          nullable: true
+        emergencyContact:
+          type: string
+          nullable: true
+        parentId:
+          type: string
+          nullable: true
+        teacherId:
+          type: string
+          nullable: true
+      required:
+        - firstName
+        - lastName
+        - grade
+        - dateOfBirth
+
+    UpdateStudentRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          pattern: '^[a-zA-Z\s]+$'
+        lastName:
+          type: string
+          pattern: '^[a-zA-Z\s]+$'
+        grade:
+          type: string
+        dateOfBirth:
+          type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+        gender:
+          type: string
+          enum: [male, female]
+        address:
+          $ref: '#/components/schemas/Address'
+          nullable: true
+        faydaId:
+          type: string
+          pattern: '^[0-9]{12}$'
+          nullable: true
+        enrollmentStatus:
+          type: string
+          enum: [active, inactive, withdrawn, transferred, graduated]
+        medicalInfo:
+          type: string
+          nullable: true
+        emergencyContact:
+          type: string
+          nullable: true
+        parentId:
+          type: string
+          nullable: true
+        teacherId:
+          type: string
+          nullable: true
 
     Report:
       type: object
@@ -586,11 +1031,24 @@ components:
         score:
           type: number
           nullable: true
+        midExam:
+          type: number
+          nullable: true
+        tests:
+          type: number
+          nullable: true
+        continuousAssessment:
+          type: number
+          nullable: true
+        finalExam:
+          type: number
+          nullable: true
         type:
           type: string
           enum: [grade, assessment, attendance]
         date:
           type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
         teacherId:
           type: string
         teacherName:
@@ -600,6 +1058,10 @@ components:
           nullable: true
         term:
           type: string
+          nullable: true
+        status:
+          type: string
+          enum: [Pass, Fail]
           nullable: true
       required:
         - id
@@ -621,11 +1083,24 @@ components:
         score:
           type: number
           nullable: true
+        midExam:
+          type: number
+          nullable: true
+        tests:
+          type: number
+          nullable: true
+        continuousAssessment:
+          type: number
+          nullable: true
+        finalExam:
+          type: number
+          nullable: true
         type:
           type: string
           enum: [grade, assessment, attendance]
         date:
           type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
         notes:
           type: string
           nullable: true
@@ -638,6 +1113,39 @@ components:
         - type
         - date
 
+    UpdateReportRequest:
+      type: object
+      properties:
+        subject:
+          type: string
+        score:
+          type: number
+          nullable: true
+        midExam:
+          type: number
+          nullable: true
+        tests:
+          type: number
+          nullable: true
+        continuousAssessment:
+          type: number
+          nullable: true
+        finalExam:
+          type: number
+          nullable: true
+        type:
+          type: string
+          enum: [grade, assessment, attendance]
+        date:
+          type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+        notes:
+          type: string
+          nullable: true
+        term:
+          type: string
+          nullable: true
+
     Attendance:
       type: object
       properties:
@@ -649,6 +1157,7 @@ components:
           type: string
         date:
           type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
         status:
           type: string
           enum: [present, absent, late]
@@ -672,6 +1181,7 @@ components:
           type: string
         date:
           type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
         status:
           type: string
           enum: [present, absent, late]
@@ -682,6 +1192,18 @@ components:
         - studentId
         - date
         - status
+
+    UpdateAttendanceRequest:
+      type: object
+      properties:
+        date:
+          type: string
+        status:
+          type: string
+          enum: [present, absent, late]
+        notes:
+          type: string
+          nullable: true
 
     DashboardSummary:
       type: object
@@ -705,3 +1227,58 @@ components:
         - absentToday
         - recentReports
         - attendanceRate
+
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        targetRole:
+          type: string
+          enum: [all, teacher, parent]
+        authorId:
+          type: string
+        authorName:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - title
+        - content
+        - targetRole
+        - authorId
+        - authorName
+        - createdAt
+        - updatedAt
+
+    CreateAnnouncementRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        targetRole:
+          type: string
+          enum: [all, teacher, parent]
+      required:
+        - title
+        - content
+
+    UpdateAnnouncementRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        targetRole:
+          type: string
+          enum: [all, teacher, parent]

@@ -6,13 +6,22 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './address';
+export * from './announcement';
+export * from './announcementTargetRole';
 export * from './attendance';
 export * from './attendanceStatus';
 export * from './authLoginResponse';
+export * from './changePasswordRequest';
+export * from './createAnnouncementRequest';
+export * from './createAnnouncementRequestTargetRole';
 export * from './createAttendanceRequest';
 export * from './createAttendanceRequestStatus';
 export * from './createReportRequest';
 export * from './createReportRequestType';
+export * from './createStudentRequest';
+export * from './createStudentRequestEnrollmentStatus';
+export * from './createStudentRequestGender';
 export * from './createUserRequest';
 export * from './createUserRequestRole';
 export * from './dashboardSummary';
@@ -21,9 +30,22 @@ export * from './getUsersParams';
 export * from './getUsersRole';
 export * from './healthStatus';
 export * from './loginRequest';
+export * from './messageResponse';
 export * from './report';
+export * from './reportStatus';
 export * from './reportType';
 export * from './student';
+export * from './studentEnrollmentStatus';
+export * from './studentGender';
+export * from './updateAnnouncementRequest';
+export * from './updateAnnouncementRequestTargetRole';
+export * from './updateAttendanceRequest';
+export * from './updateAttendanceRequestStatus';
+export * from './updateReportRequest';
+export * from './updateReportRequestType';
+export * from './updateStudentRequest';
+export * from './updateStudentRequestEnrollmentStatus';
+export * from './updateStudentRequestGender';
 export * from './updateUserRequest';
 export * from './updateUserRequestRole';
 export * from './user';

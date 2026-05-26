@@ -5,6 +5,7 @@
  * Hamle Elementary School Student Information System API
  * OpenAPI spec version: 0.1.0
  */
+import type { ReportStatus } from './reportStatus';
 import type { ReportType } from './reportType';
 
 export interface Report {
@@ -13,10 +14,16 @@ export interface Report {
   studentName: string;
   subject: string;
   score?: number | null;
+  midExam?: number | null;
+  tests?: number | null;
+  continuousAssessment?: number | null;
+  finalExam?: number | null;
   type: ReportType;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
   date: string;
   teacherId: string;
   teacherName: string;
   notes?: string | null;
   term?: string | null;
+  status?: ReportStatus;
 }

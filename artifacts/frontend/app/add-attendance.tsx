@@ -61,9 +61,20 @@ export default function AddAttendanceScreen() {
       Alert.alert("Missing Fields", "Please enter a date.");
       return;
     }
-    const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dobRegex.test(date.trim())) {
-      Alert.alert("Invalid Date", "Date must be in YYYY-MM-DD format.");
+    // Validate date is a real calendar date
+    const isValidDate = (dateStr: string): boolean => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+      const [y, m, d] = dateStr.split("-").map(Number);
+      const dt = new Date(y!, m! - 1, d);
+      return dt.getFullYear() === y && dt.getMonth() === m! - 1 && dt.getDate() === d;
+    };
+    if (!isValidDate(date.trim())) {
+      Alert.alert("Invalid Date", "Date must be a valid date in YYYY-MM-DD format.");
+      return;
+    }
+    // Prevent future dates
+    if (new Date(date.trim()) > new Date()) {
+      Alert.alert("Invalid Date", "Attendance date cannot be in the future.");
       return;
     }
     recordAttendance({

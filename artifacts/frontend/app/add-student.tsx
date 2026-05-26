@@ -18,6 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
 import { getGetStudentsQueryKey } from "@workspace/api-client-react";
+import { API_URL } from "@/constants/api";
 
 const GRADES = [
   "Grade 1", "Grade 2", "Grade 3", "Grade 4",
@@ -35,26 +36,65 @@ export default function AddStudentScreen() {
   const [lastName, setLastName] = useState("");
   const [grade, setGrade] = useState<string | null>(null);
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [faydaId, setFaydaId] = useState("");
+  const [region, setRegion] = useState("Addis Ababa");
+  const [zone, setZone] = useState("");
+  const [kebele, setKebele] = useState("");
+  const [houseNo, setHouseNo] = useState("");
   const [isPending, setIsPending] = useState(false);
 
   const top = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
+
+  // --- Validation helpers ---
+  const NAME_REGEX = /^[a-zA-Z\u1200-\u137F\s]+$/; // Latin + Amharic letters only
+  const stripNonAlpha = (text: string) => text.replace(/[^a-zA-Z\u1200-\u137F\s]/g, "");
+  const stripNonDigit = (text: string) => text.replace(/[^0-9]/g, "");
+
+  const isValidDate = (dateStr: string): boolean => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y!, m! - 1, d);
+    return date.getFullYear() === y && date.getMonth() === m! - 1 && date.getDate() === d;
+  };
+
+  const handleFirstNameChange = (text: string) => setFirstName(stripNonAlpha(text));
+  const handleLastNameChange = (text: string) => setLastName(stripNonAlpha(text));
+  const handleFaydaIdChange = (text: string) => setFaydaId(stripNonDigit(text));
 
   const handleSubmit = async () => {
     if (!firstName.trim() || !lastName.trim() || !grade || !dateOfBirth.trim()) {
       Alert.alert("Missing Fields", "Please fill in all required fields.");
       return;
     }
-    const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dobRegex.test(dateOfBirth.trim())) {
-      Alert.alert("Invalid Date", "Date of Birth must be in YYYY-MM-DD format.");
+    if (!NAME_REGEX.test(firstName.trim())) {
+      Alert.alert("Invalid Name", "First name must contain only letters (no numbers or special characters).");
+      return;
+    }
+    if (!NAME_REGEX.test(lastName.trim())) {
+      Alert.alert("Invalid Name", "Last name must contain only letters (no numbers or special characters).");
+      return;
+    }
+    if (!isValidDate(dateOfBirth.trim())) {
+      Alert.alert("Invalid Date", "Date of Birth must be a valid date in YYYY-MM-DD format.");
+      return;
+    }
+    // Ensure the child is between 3 and 18 years old
+    const dob = new Date(dateOfBirth.trim());
+    const today = new Date();
+    const ageDiffMs = today.getTime() - dob.getTime();
+    const ageYears = ageDiffMs / (365.25 * 24 * 60 * 60 * 1000);
+    if (ageYears < 3 || ageYears > 18) {
+      Alert.alert("Invalid Age", "Student must be between 3 and 18 years old.");
+      return;
+    }
+    if (faydaId.trim() && (faydaId.trim().length !== 12 || !/^\d{12}$/.test(faydaId.trim()))) {
+      Alert.alert("Invalid Fayda ID", "Fayda ID must be exactly 12 digits (numbers only).");
       return;
     }
 
     try {
       setIsPending(true);
-      const domain = process.env.EXPO_PUBLIC_DOMAIN;
-      const baseUrl = domain ? `https://${domain}` : "";
-      const res = await fetch(`${baseUrl}/api/students`, {
+      const res = await fetch(`${API_URL}/api/students`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,6 +105,13 @@ export default function AddStudentScreen() {
           lastName: lastName.trim(),
           grade,
           dateOfBirth: dateOfBirth.trim(),
+          faydaId: faydaId.trim() || null,
+          address: {
+            region: region.trim(),
+            zone: zone.trim(),
+            kebele: kebele.trim(),
+            houseNo: houseNo.trim(),
+          },
         }),
       });
       if (!res.ok) {
@@ -103,9 +150,11 @@ export default function AddStudentScreen() {
           color: colors.foreground, backgroundColor: colors.card, marginBottom: 16,
         }}
         value={firstName}
-        onChangeText={setFirstName}
+        onChangeText={handleFirstNameChange}
         placeholder="e.g. Abebe"
         placeholderTextColor={colors.mutedForeground}
+        autoCapitalize="words"
+        maxLength={50}
       />
 
       <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Last Name *</Text>
@@ -116,9 +165,11 @@ export default function AddStudentScreen() {
           color: colors.foreground, backgroundColor: colors.card, marginBottom: 16,
         }}
         value={lastName}
-        onChangeText={setLastName}
+        onChangeText={handleLastNameChange}
         placeholder="e.g. Kebede"
         placeholderTextColor={colors.mutedForeground}
+        autoCapitalize="words"
+        maxLength={50}
       />
 
       <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Grade *</Text>
@@ -147,11 +198,82 @@ export default function AddStudentScreen() {
         style={{
           height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12,
           paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular",
-          color: colors.foreground, backgroundColor: colors.card, marginBottom: 28,
+          color: colors.foreground, backgroundColor: colors.card, marginBottom: 16,
         }}
         value={dateOfBirth}
         onChangeText={setDateOfBirth}
         placeholder="2015-03-25"
+        placeholderTextColor={colors.mutedForeground}
+        maxLength={10}
+        keyboardType="numbers-and-punctuation"
+      />
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Ethiopian Fayda ID (12 Digits)</Text>
+      <TextInput
+        style={{
+          height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12,
+          paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular",
+          color: colors.foreground, backgroundColor: colors.card, marginBottom: 16,
+        }}
+        value={faydaId}
+        onChangeText={handleFaydaIdChange}
+        placeholder="12-digit National ID"
+        keyboardType="number-pad"
+        maxLength={12}
+        placeholderTextColor={colors.mutedForeground}
+      />
+
+      <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground, marginTop: 8, marginBottom: 12 }}>Address Details</Text>
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Region</Text>
+      <TextInput
+        style={{
+          height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12,
+          paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular",
+          color: colors.foreground, backgroundColor: colors.card, marginBottom: 16,
+        }}
+        value={region}
+        onChangeText={setRegion}
+        placeholder="e.g. Addis Ababa"
+        placeholderTextColor={colors.mutedForeground}
+      />
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Zone / Sub-City</Text>
+      <TextInput
+        style={{
+          height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12,
+          paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular",
+          color: colors.foreground, backgroundColor: colors.card, marginBottom: 16,
+        }}
+        value={zone}
+        onChangeText={setZone}
+        placeholder="e.g. Bole"
+        placeholderTextColor={colors.mutedForeground}
+      />
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Kebele</Text>
+      <TextInput
+        style={{
+          height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12,
+          paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular",
+          color: colors.foreground, backgroundColor: colors.card, marginBottom: 16,
+        }}
+        value={kebele}
+        onChangeText={setKebele}
+        placeholder="e.g. 03"
+        placeholderTextColor={colors.mutedForeground}
+      />
+
+      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>House Number</Text>
+      <TextInput
+        style={{
+          height: 50, borderWidth: 1.5, borderColor: colors.border, borderRadius: 12,
+          paddingHorizontal: 16, fontSize: 15, fontFamily: "Inter_400Regular",
+          color: colors.foreground, backgroundColor: colors.card, marginBottom: 28,
+        }}
+        value={houseNo}
+        onChangeText={setHouseNo}
+        placeholder="e.g. 1024"
         placeholderTextColor={colors.mutedForeground}
       />
 

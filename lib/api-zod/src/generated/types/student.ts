@@ -5,13 +5,27 @@
  * Hamle Elementary School Student Information System API
  * OpenAPI spec version: 0.1.0
  */
+import type { Address } from './address';
+import type { StudentEnrollmentStatus } from './studentEnrollmentStatus';
+import type { StudentGender } from './studentGender';
 
 export interface Student {
   id: string;
+  studentNo: string;
+  /** @pattern ^[a-zA-Z\s]+$ */
   firstName: string;
+  /** @pattern ^[a-zA-Z\s]+$ */
   lastName: string;
   grade: string;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
   dateOfBirth: string;
+  gender: StudentGender;
+  address?: Address | null;
+  /** @pattern ^[0-9]{12}$ */
+  faydaId?: string | null;
+  enrollmentStatus: StudentEnrollmentStatus;
+  medicalInfo?: string | null;
+  emergencyContact?: string | null;
   parentId?: string | null;
   teacherId?: string | null;
   parentName?: string | null;

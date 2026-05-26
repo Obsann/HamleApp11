@@ -60,11 +60,25 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="announcements"
+        options={{
+          title: "Announcements",
+          tabBarIcon: ({ color, size }) => <Feather name="bell" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="users"
         options={{
           title: "Users",
           href: isAdmin ? undefined : null,
           tabBarIcon: ({ color, size }) => <Feather name="shield" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
         }}
       />
     </Tabs>

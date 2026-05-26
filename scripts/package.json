@@ -9,6 +9,8 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "tsx": "catalog:"
+    "tsx": "catalog:",
+    "mongoose": "^8.9.0",
+    "dotenv": "^17.4.2"
   }
 }

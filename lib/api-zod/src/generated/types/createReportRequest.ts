@@ -11,7 +11,12 @@ export interface CreateReportRequest {
   studentId: string;
   subject: string;
   score?: number | null;
+  midExam?: number | null;
+  tests?: number | null;
+  continuousAssessment?: number | null;
+  finalExam?: number | null;
   type: CreateReportRequestType;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
   date: string;
   notes?: string | null;
   term?: string | null;

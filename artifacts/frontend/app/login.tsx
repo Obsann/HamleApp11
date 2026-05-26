@@ -19,6 +19,7 @@ import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
 import { login } from "@workspace/api-client-react";
 import type { AuthUser } from "@/context/AuthContext";
+import { Feather } from "@expo/vector-icons";
 
 export default function LoginScreen() {
   const colors = useColors();
@@ -28,6 +29,7 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +40,11 @@ export default function LoginScreen() {
       setError("Please enter your email and password");
       return;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -45,8 +52,17 @@ export default function LoginScreen() {
       await saveAuth(result.token, result.user as AuthUser);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)");
-    } catch {
-      setError("Invalid email or password. Please try again.");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      if (err && err.status === 401) {
+        setError("Invalid email or password. Please try again.");
+      } else if (err && err.status === 429) {
+        setError("Too many login attempts. Please try again in 15 minutes.");
+      } else if (err && err.message && (err.message.includes("Network") || err.message.includes("fetch") || err.message.includes("Failed to fetch") || err.message.includes("network"))) {
+        setError("Unable to connect to the server. Please verify the backend is running.");
+      } else {
+        setError("Invalid email or password. Please try again.");
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
@@ -101,17 +117,30 @@ export default function LoginScreen() {
 
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Enter your password"
-                placeholderTextColor={colors.mutedForeground}
-                secureTextEntry
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
-                editable={!loading}
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter your password"
+                  placeholderTextColor={colors.mutedForeground}
+                  secureTextEntry={!showPassword}
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
+                  editable={!loading}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.7}
+                >
+                  <Feather
+                    name={showPassword ? "eye" : "eye-off"}
+                    size={20}
+                    color={colors.mutedForeground}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <TouchableOpacity
@@ -223,6 +252,31 @@ function makeStyles(colors: ReturnType<typeof useColors>, insets: ReturnType<typ
       fontFamily: "Inter_400Regular",
       color: colors.foreground,
       backgroundColor: colors.background,
+    },
+    passwordContainer: {
+      position: "relative",
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    passwordInput: {
+      flex: 1,
+      height: 52,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      borderRadius: 12,
+      paddingLeft: 16,
+      paddingRight: 50,
+      fontSize: 16,
+      fontFamily: "Inter_400Regular",
+      color: colors.foreground,
+      backgroundColor: colors.background,
+    },
+    eyeButton: {
+      position: "absolute",
+      right: 16,
+      height: "100%",
+      justifyContent: "center",
+      alignItems: "center",
     },
     button: {
       height: 54,

@@ -13,9 +13,18 @@ export interface ErrorResponse {
   message: string;
 }
 
+export interface MessageResponse {
+  message: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export type UserRole = typeof UserRole[keyof typeof UserRole];
@@ -86,18 +95,131 @@ export interface UpdateUserRequest {
   role: UpdateUserRequestRole;
 }
 
+export interface Address {
+  region: string;
+  zone: string;
+  kebele: string;
+  houseNo: string;
+}
+
+export type StudentGender = typeof StudentGender[keyof typeof StudentGender];
+
+
+export const StudentGender = {
+  male: 'male',
+  female: 'female',
+} as const;
+
+export type StudentEnrollmentStatus = typeof StudentEnrollmentStatus[keyof typeof StudentEnrollmentStatus];
+
+
+export const StudentEnrollmentStatus = {
+  active: 'active',
+  inactive: 'inactive',
+  withdrawn: 'withdrawn',
+  transferred: 'transferred',
+  graduated: 'graduated',
+} as const;
+
 export interface Student {
   id: string;
+  studentNo: string;
+  /** @pattern ^[a-zA-Z\s]+$ */
   firstName: string;
+  /** @pattern ^[a-zA-Z\s]+$ */
   lastName: string;
   grade: string;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
   dateOfBirth: string;
+  gender: StudentGender;
+  address?: Address | null;
+  /** @pattern ^[0-9]{12}$ */
+  faydaId?: string | null;
+  enrollmentStatus: StudentEnrollmentStatus;
+  medicalInfo?: string | null;
+  emergencyContact?: string | null;
   parentId?: string | null;
   teacherId?: string | null;
   parentName?: string | null;
   teacherName?: string | null;
   attendanceRate?: number | null;
   averageScore?: number | null;
+}
+
+export type CreateStudentRequestGender = typeof CreateStudentRequestGender[keyof typeof CreateStudentRequestGender];
+
+
+export const CreateStudentRequestGender = {
+  male: 'male',
+  female: 'female',
+} as const;
+
+export type CreateStudentRequestEnrollmentStatus = typeof CreateStudentRequestEnrollmentStatus[keyof typeof CreateStudentRequestEnrollmentStatus];
+
+
+export const CreateStudentRequestEnrollmentStatus = {
+  active: 'active',
+  inactive: 'inactive',
+  withdrawn: 'withdrawn',
+  transferred: 'transferred',
+  graduated: 'graduated',
+} as const;
+
+export interface CreateStudentRequest {
+  /** @pattern ^[a-zA-Z\s]+$ */
+  firstName: string;
+  /** @pattern ^[a-zA-Z\s]+$ */
+  lastName: string;
+  grade: string;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
+  dateOfBirth: string;
+  gender?: CreateStudentRequestGender;
+  address?: Address | null;
+  /** @pattern ^[0-9]{12}$ */
+  faydaId?: string | null;
+  enrollmentStatus?: CreateStudentRequestEnrollmentStatus;
+  medicalInfo?: string | null;
+  emergencyContact?: string | null;
+  parentId?: string | null;
+  teacherId?: string | null;
+}
+
+export type UpdateStudentRequestGender = typeof UpdateStudentRequestGender[keyof typeof UpdateStudentRequestGender];
+
+
+export const UpdateStudentRequestGender = {
+  male: 'male',
+  female: 'female',
+} as const;
+
+export type UpdateStudentRequestEnrollmentStatus = typeof UpdateStudentRequestEnrollmentStatus[keyof typeof UpdateStudentRequestEnrollmentStatus];
+
+
+export const UpdateStudentRequestEnrollmentStatus = {
+  active: 'active',
+  inactive: 'inactive',
+  withdrawn: 'withdrawn',
+  transferred: 'transferred',
+  graduated: 'graduated',
+} as const;
+
+export interface UpdateStudentRequest {
+  /** @pattern ^[a-zA-Z\s]+$ */
+  firstName?: string;
+  /** @pattern ^[a-zA-Z\s]+$ */
+  lastName?: string;
+  grade?: string;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
+  dateOfBirth?: string;
+  gender?: UpdateStudentRequestGender;
+  address?: Address | null;
+  /** @pattern ^[0-9]{12}$ */
+  faydaId?: string | null;
+  enrollmentStatus?: UpdateStudentRequestEnrollmentStatus;
+  medicalInfo?: string | null;
+  emergencyContact?: string | null;
+  parentId?: string | null;
+  teacherId?: string | null;
 }
 
 export type ReportType = typeof ReportType[keyof typeof ReportType];
@@ -109,18 +231,32 @@ export const ReportType = {
   attendance: 'attendance',
 } as const;
 
+export type ReportStatus = typeof ReportStatus[keyof typeof ReportStatus] | null;
+
+
+export const ReportStatus = {
+  Pass: 'Pass',
+  Fail: 'Fail',
+} as const;
+
 export interface Report {
   id: string;
   studentId: string;
   studentName: string;
   subject: string;
   score?: number | null;
+  midExam?: number | null;
+  tests?: number | null;
+  continuousAssessment?: number | null;
+  finalExam?: number | null;
   type: ReportType;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
   date: string;
   teacherId: string;
   teacherName: string;
   notes?: string | null;
   term?: string | null;
+  status?: ReportStatus;
 }
 
 export type CreateReportRequestType = typeof CreateReportRequestType[keyof typeof CreateReportRequestType];
@@ -136,8 +272,36 @@ export interface CreateReportRequest {
   studentId: string;
   subject: string;
   score?: number | null;
+  midExam?: number | null;
+  tests?: number | null;
+  continuousAssessment?: number | null;
+  finalExam?: number | null;
   type: CreateReportRequestType;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
   date: string;
+  notes?: string | null;
+  term?: string | null;
+}
+
+export type UpdateReportRequestType = typeof UpdateReportRequestType[keyof typeof UpdateReportRequestType];
+
+
+export const UpdateReportRequestType = {
+  grade: 'grade',
+  assessment: 'assessment',
+  attendance: 'attendance',
+} as const;
+
+export interface UpdateReportRequest {
+  subject?: string;
+  score?: number | null;
+  midExam?: number | null;
+  tests?: number | null;
+  continuousAssessment?: number | null;
+  finalExam?: number | null;
+  type?: UpdateReportRequestType;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
+  date?: string;
   notes?: string | null;
   term?: string | null;
 }
@@ -155,6 +319,7 @@ export interface Attendance {
   id: string;
   studentId: string;
   studentName: string;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
   date: string;
   status: AttendanceStatus;
   teacherId: string;
@@ -172,8 +337,24 @@ export const CreateAttendanceRequestStatus = {
 
 export interface CreateAttendanceRequest {
   studentId: string;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
   date: string;
   status: CreateAttendanceRequestStatus;
+  notes?: string | null;
+}
+
+export type UpdateAttendanceRequestStatus = typeof UpdateAttendanceRequestStatus[keyof typeof UpdateAttendanceRequestStatus];
+
+
+export const UpdateAttendanceRequestStatus = {
+  present: 'present',
+  absent: 'absent',
+  late: 'late',
+} as const;
+
+export interface UpdateAttendanceRequest {
+  date?: string;
+  status?: UpdateAttendanceRequestStatus;
   notes?: string | null;
 }
 
@@ -184,6 +365,56 @@ export interface DashboardSummary {
   recentReports: number;
   attendanceRate: number;
   myStudents?: number | null;
+}
+
+export type AnnouncementTargetRole = typeof AnnouncementTargetRole[keyof typeof AnnouncementTargetRole];
+
+
+export const AnnouncementTargetRole = {
+  all: 'all',
+  teacher: 'teacher',
+  parent: 'parent',
+} as const;
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  targetRole: AnnouncementTargetRole;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateAnnouncementRequestTargetRole = typeof CreateAnnouncementRequestTargetRole[keyof typeof CreateAnnouncementRequestTargetRole];
+
+
+export const CreateAnnouncementRequestTargetRole = {
+  all: 'all',
+  teacher: 'teacher',
+  parent: 'parent',
+} as const;
+
+export interface CreateAnnouncementRequest {
+  title: string;
+  content: string;
+  targetRole?: CreateAnnouncementRequestTargetRole;
+}
+
+export type UpdateAnnouncementRequestTargetRole = typeof UpdateAnnouncementRequestTargetRole[keyof typeof UpdateAnnouncementRequestTargetRole];
+
+
+export const UpdateAnnouncementRequestTargetRole = {
+  all: 'all',
+  teacher: 'teacher',
+  parent: 'parent',
+} as const;
+
+export interface UpdateAnnouncementRequest {
+  title?: string;
+  content?: string;
+  targetRole?: UpdateAnnouncementRequestTargetRole;
 }
 
 export type GetUsersParams = {

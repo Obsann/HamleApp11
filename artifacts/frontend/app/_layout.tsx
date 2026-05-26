@@ -17,7 +17,9 @@ import { setBaseUrl } from "@workspace/api-client-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 
-setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
+import { API_URL } from "@/constants/api";
+
+setBaseUrl(API_URL);
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,11 +40,15 @@ function AuthGate() {
 
   useEffect(() => {
     if (isLoading) return;
-    const inAuthGroup = segments[0] === "(tabs)";
-    if (!user && inAuthGroup) {
-      router.replace("/login");
-    } else if (user && !inAuthGroup) {
-      router.replace("/(tabs)");
+    const isAtLogin = segments[0] === "login";
+    if (!user) {
+      if (!isAtLogin) {
+        router.replace("/login");
+      }
+    } else {
+      if (isAtLogin) {
+        router.replace("/(tabs)");
+      }
     }
   }, [user, isLoading, segments]);
 
@@ -75,6 +81,10 @@ function RootLayoutNav() {
         <Stack.Screen
           name="edit-user"
           options={{ headerShown: true, title: "Edit User", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="edit-student"
+          options={{ headerShown: true, title: "Edit Student", headerBackTitle: "Back" }}
         />
       </Stack>
     </>

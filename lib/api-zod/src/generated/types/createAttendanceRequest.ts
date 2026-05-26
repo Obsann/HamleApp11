@@ -9,6 +9,7 @@ import type { CreateAttendanceRequestStatus } from './createAttendanceRequestSta
 
 export interface CreateAttendanceRequest {
   studentId: string;
+  /** @pattern ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ */
   date: string;
   status: CreateAttendanceRequestStatus;
   notes?: string | null;

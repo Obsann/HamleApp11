@@ -5,6 +5,11 @@ export interface IUser extends Document {
   email: string;
   passwordHash: string;
   role: "admin" | "teacher" | "parent";
+  securityQuestion1?: string | null;
+  securityAnswer1?: string | null;
+  securityQuestion2?: string | null;
+  securityAnswer2?: string | null;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,14 +25,19 @@ const UserSchema = new Schema<IUser>(
       default: "parent",
       required: true,
     },
+    securityQuestion1: { type: String, default: null },
+    securityAnswer1: { type: String, default: null },
+    securityQuestion2: { type: String, default: null },
+    securityAnswer2: { type: String, default: null },
+    deletedAt: { type: Date, default: null },
   },
   {
     timestamps: true,
     toJSON: {
       virtuals: true,
       transform: (_, ret) => {
-        delete ret._id;
-        delete ret.__v;
+        delete (ret as any)._id;
+        delete (ret as any).__v;
         return ret;
       },
     },

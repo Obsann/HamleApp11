@@ -50,9 +50,18 @@ export default function AddUserScreen() {
     },
   });
 
+  // --- Validation helpers ---
+  const NAME_REGEX = /^[a-zA-Z\u1200-\u137F\s]+$/;
+  const stripNonAlpha = (text: string) => text.replace(/[^a-zA-Z\u1200-\u137F\s]/g, "");
+  const handleNameChange = (text: string) => setName(stripNonAlpha(text));
+
   function handleSubmit() {
     if (!name.trim()) {
       Alert.alert("Missing fields", "Please enter the user's full name.");
+      return;
+    }
+    if (!NAME_REGEX.test(name.trim())) {
+      Alert.alert("Invalid Name", "Name must contain only letters (no numbers or special characters).");
       return;
     }
     if (!email.trim()) {
@@ -68,8 +77,25 @@ export default function AddUserScreen() {
       Alert.alert("Missing fields", "Please enter a password.");
       return;
     }
-    if (password.length < 6) {
-      Alert.alert("Weak password", "Password must be at least 6 characters.");
+    // Match backend password complexity requirements
+    if (password.length < 8) {
+      Alert.alert("Weak Password", "Password must be at least 8 characters.");
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      Alert.alert("Weak Password", "Password must contain at least one lowercase letter.");
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      Alert.alert("Weak Password", "Password must contain at least one uppercase letter.");
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      Alert.alert("Weak Password", "Password must contain at least one number.");
+      return;
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      Alert.alert("Weak Password", 'Password must contain at least one special character (!@#$%^&* etc.).');
       return;
     }
 
@@ -114,10 +140,11 @@ export default function AddUserScreen() {
       <TextInput
         style={[inputStyle, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border }]}
         value={name}
-        onChangeText={setName}
+        onChangeText={handleNameChange}
         placeholder="e.g. Tigist Alemu"
         placeholderTextColor={colors.mutedForeground}
         autoCapitalize="words"
+        maxLength={80}
       />
 
       <Text style={[labelStyle, { color: colors.foreground }]}>Email Address *</Text>
@@ -138,7 +165,7 @@ export default function AddUserScreen() {
           style={[inputStyle, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border, marginBottom: 0, paddingRight: 50 }]}
           value={password}
           onChangeText={setPassword}
-          placeholder="Minimum 6 characters"
+          placeholder="Min 8 chars, uppercase, lowercase, digit, special"
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry={!showPassword}
         />

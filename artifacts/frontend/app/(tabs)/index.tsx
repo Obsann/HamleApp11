@@ -77,7 +77,7 @@ export default function DashboardScreen() {
   const { user, logout } = useAuth();
 
   const { data: summary, isLoading, refetch, isRefetching } = useGetDashboardSummary({
-    query: { staleTime: 1000 * 60 },
+    query: { staleTime: 1000 * 60 } as any,
   });
 
   const styles = makeStyles(colors, insets);

@@ -1,7 +1,18 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env["SESSION_SECRET"] ?? "hamle-sis-secret";
+let _cachedSecret: string | undefined;
+
+function getSecret(): string {
+  if (!_cachedSecret) {
+    const s = process.env["SESSION_SECRET"];
+    if (!s) {
+      throw new Error("SESSION_SECRET environment variable is required.");
+    }
+    _cachedSecret = s;
+  }
+  return _cachedSecret;
+}
 
 export interface JwtPayload {
   userId: string;
@@ -18,7 +29,7 @@ declare global {
 }
 
 export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(payload, getSecret(), { expiresIn: "7d" });
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
@@ -30,8 +41,8 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 
   const token = authHeader.slice(7);
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    req.user = payload;
+    const payload = jwt.verify(token, getSecret()) as any;
+    req.user = payload as JwtPayload;
     next();
   } catch {
     res.status(401).json({ message: "Invalid or expired token" });

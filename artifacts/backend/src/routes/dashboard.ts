@@ -27,14 +27,9 @@ router.get("/dashboard/summary", requireAuth, async (req, res): Promise<void> =>
       date: { $gte: sevenDaysAgo },
     });
 
-    const allAttendance = await AttendanceModel.find().select("status");
-    const presentCount = allAttendance.filter(
-      (a) => a.status === "present"
-    ).length;
-    const rate =
-      allAttendance.length > 0
-        ? (presentCount / allAttendance.length) * 100
-        : 100;
+    const totalAttendanceCount = await AttendanceModel.countDocuments();
+    const totalPresentCount = await AttendanceModel.countDocuments({ status: "present" });
+    const rate = totalAttendanceCount > 0 ? (totalPresentCount / totalAttendanceCount) * 100 : 100;
 
     res.json({
       totalStudents: total,

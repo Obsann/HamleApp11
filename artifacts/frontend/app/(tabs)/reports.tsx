@@ -40,19 +40,51 @@ const CHART_COLORS = ["#1B3D7A", "#7C3AED", "#16A34A", "#D97706", "#DC2626", "#0
 function ReportCard({ report }: { report: Report }) {
   const colors = useColors();
   const typeInfo = TYPE_COLORS[report.type] ?? TYPE_COLORS["grade"];
+  const isPass = report.status === "Pass";
   return (
     <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-        <Text style={{ fontSize: 16, fontFamily: "Inter_600SemiBold", color: colors.foreground, flex: 1 }}>{report.studentName}</Text>
-        <View style={{ borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: typeInfo.bg }}>
-          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: typeInfo.text }}>{typeInfo.label}</Text>
+        <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground, flex: 1 }}>{report.studentName}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          {report.status && (
+            <View style={{ borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: isPass ? "#D1FAE5" : "#FEE2E2" }}>
+              <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: isPass ? "#065F46" : "#991B1B" }}>
+                {report.status.toUpperCase()}
+              </Text>
+            </View>
+          )}
+          <View style={{ borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: typeInfo.bg }}>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: typeInfo.text }}>{typeInfo.label}</Text>
+          </View>
         </View>
       </View>
-      <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginBottom: 10 }}>{report.subject}</Text>
+      <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 8 }}>{report.subject}</Text>
+
+      {report.type === "grade" && report.midExam != null && (
+        <View style={{ backgroundColor: colors.secondary + "50", borderRadius: 12, padding: 12, marginBottom: 12 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Mid Exam:</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.midExam} / 100</Text>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Tests:</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.tests} / 100</Text>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Continuous Assessment:</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.continuousAssessment} / 100</Text>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Final Exam:</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.finalExam} / 100</Text>
+          </View>
+        </View>
+      )}
+
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         {report.score != null && (
-          <View style={{ borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: colors.primary }}>
-            <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" }}>{report.score}</Text>
+          <View style={{ borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: isPass ? "#10B981" : colors.primary }}>
+            <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" }}>Score: {report.score}</Text>
           </View>
         )}
         <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{report.date}</Text>

@@ -47,14 +47,45 @@ export const GetMeResponse = zod.object({
 
 
 /**
+ * @summary Change authenticated user's password
+ */
+export const ChangePasswordBody = zod.object({
+  "currentPassword": zod.string(),
+  "newPassword": zod.string()
+})
+
+export const ChangePasswordResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
  * @summary Get students (filtered by role)
  */
+export const getStudentsResponseFirstNameRegExp = new RegExp('^[a-zA-Z\\s]+$');
+export const getStudentsResponseLastNameRegExp = new RegExp('^[a-zA-Z\\s]+$');
+export const getStudentsResponseDateOfBirthRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+export const getStudentsResponseFaydaIdRegExp = new RegExp('^[0-9]{12}$');
+
+
 export const GetStudentsResponseItem = zod.object({
   "id": zod.string(),
-  "firstName": zod.string(),
-  "lastName": zod.string(),
+  "studentNo": zod.string(),
+  "firstName": zod.string().regex(getStudentsResponseFirstNameRegExp),
+  "lastName": zod.string().regex(getStudentsResponseLastNameRegExp),
   "grade": zod.string(),
-  "dateOfBirth": zod.string(),
+  "dateOfBirth": zod.string().regex(getStudentsResponseDateOfBirthRegExp),
+  "gender": zod.enum(['male', 'female']),
+  "address": zod.object({
+  "region": zod.string(),
+  "zone": zod.string(),
+  "kebele": zod.string(),
+  "houseNo": zod.string()
+}).nullish(),
+  "faydaId": zod.string().regex(getStudentsResponseFaydaIdRegExp).nullish(),
+  "enrollmentStatus": zod.enum(['active', 'inactive', 'withdrawn', 'transferred', 'graduated']),
+  "medicalInfo": zod.string().nullish(),
+  "emergencyContact": zod.string().nullish(),
   "parentId": zod.string().nullish(),
   "teacherId": zod.string().nullish(),
   "parentName": zod.string().nullish(),
@@ -66,18 +97,66 @@ export const GetStudentsResponse = zod.array(GetStudentsResponseItem)
 
 
 /**
+ * @summary Create a new student (admin only)
+ */
+export const createStudentBodyFirstNameRegExp = new RegExp('^[a-zA-Z\\s]+$');
+export const createStudentBodyLastNameRegExp = new RegExp('^[a-zA-Z\\s]+$');
+export const createStudentBodyDateOfBirthRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+export const createStudentBodyFaydaIdRegExp = new RegExp('^[0-9]{12}$');
+
+
+export const CreateStudentBody = zod.object({
+  "firstName": zod.string().regex(createStudentBodyFirstNameRegExp),
+  "lastName": zod.string().regex(createStudentBodyLastNameRegExp),
+  "grade": zod.string(),
+  "dateOfBirth": zod.string().regex(createStudentBodyDateOfBirthRegExp),
+  "gender": zod.enum(['male', 'female']).optional(),
+  "address": zod.object({
+  "region": zod.string(),
+  "zone": zod.string(),
+  "kebele": zod.string(),
+  "houseNo": zod.string()
+}).nullish(),
+  "faydaId": zod.string().regex(createStudentBodyFaydaIdRegExp).nullish(),
+  "enrollmentStatus": zod.enum(['active', 'inactive', 'withdrawn', 'transferred', 'graduated']).optional(),
+  "medicalInfo": zod.string().nullish(),
+  "emergencyContact": zod.string().nullish(),
+  "parentId": zod.string().nullish(),
+  "teacherId": zod.string().nullish()
+})
+
+
+/**
  * @summary Get a single student
  */
 export const GetStudentParams = zod.object({
   "id": zod.coerce.string()
 })
 
+export const getStudentResponseFirstNameRegExp = new RegExp('^[a-zA-Z\\s]+$');
+export const getStudentResponseLastNameRegExp = new RegExp('^[a-zA-Z\\s]+$');
+export const getStudentResponseDateOfBirthRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+export const getStudentResponseFaydaIdRegExp = new RegExp('^[0-9]{12}$');
+
+
 export const GetStudentResponse = zod.object({
   "id": zod.string(),
-  "firstName": zod.string(),
-  "lastName": zod.string(),
+  "studentNo": zod.string(),
+  "firstName": zod.string().regex(getStudentResponseFirstNameRegExp),
+  "lastName": zod.string().regex(getStudentResponseLastNameRegExp),
   "grade": zod.string(),
-  "dateOfBirth": zod.string(),
+  "dateOfBirth": zod.string().regex(getStudentResponseDateOfBirthRegExp),
+  "gender": zod.enum(['male', 'female']),
+  "address": zod.object({
+  "region": zod.string(),
+  "zone": zod.string(),
+  "kebele": zod.string(),
+  "houseNo": zod.string()
+}).nullish(),
+  "faydaId": zod.string().regex(getStudentResponseFaydaIdRegExp).nullish(),
+  "enrollmentStatus": zod.enum(['active', 'inactive', 'withdrawn', 'transferred', 'graduated']),
+  "medicalInfo": zod.string().nullish(),
+  "emergencyContact": zod.string().nullish(),
   "parentId": zod.string().nullish(),
   "teacherId": zod.string().nullish(),
   "parentName": zod.string().nullish(),
@@ -88,20 +167,102 @@ export const GetStudentResponse = zod.object({
 
 
 /**
+ * @summary Update a student (admin/teacher)
+ */
+export const UpdateStudentParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const updateStudentBodyFirstNameRegExp = new RegExp('^[a-zA-Z\\s]+$');
+export const updateStudentBodyLastNameRegExp = new RegExp('^[a-zA-Z\\s]+$');
+export const updateStudentBodyDateOfBirthRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+export const updateStudentBodyFaydaIdRegExp = new RegExp('^[0-9]{12}$');
+
+
+export const UpdateStudentBody = zod.object({
+  "firstName": zod.string().regex(updateStudentBodyFirstNameRegExp).optional(),
+  "lastName": zod.string().regex(updateStudentBodyLastNameRegExp).optional(),
+  "grade": zod.string().optional(),
+  "dateOfBirth": zod.string().regex(updateStudentBodyDateOfBirthRegExp).optional(),
+  "gender": zod.enum(['male', 'female']).optional(),
+  "address": zod.object({
+  "region": zod.string(),
+  "zone": zod.string(),
+  "kebele": zod.string(),
+  "houseNo": zod.string()
+}).nullish(),
+  "faydaId": zod.string().regex(updateStudentBodyFaydaIdRegExp).nullish(),
+  "enrollmentStatus": zod.enum(['active', 'inactive', 'withdrawn', 'transferred', 'graduated']).optional(),
+  "medicalInfo": zod.string().nullish(),
+  "emergencyContact": zod.string().nullish(),
+  "parentId": zod.string().nullish(),
+  "teacherId": zod.string().nullish()
+})
+
+export const updateStudentResponseFirstNameRegExp = new RegExp('^[a-zA-Z\\s]+$');
+export const updateStudentResponseLastNameRegExp = new RegExp('^[a-zA-Z\\s]+$');
+export const updateStudentResponseDateOfBirthRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+export const updateStudentResponseFaydaIdRegExp = new RegExp('^[0-9]{12}$');
+
+
+export const UpdateStudentResponse = zod.object({
+  "id": zod.string(),
+  "studentNo": zod.string(),
+  "firstName": zod.string().regex(updateStudentResponseFirstNameRegExp),
+  "lastName": zod.string().regex(updateStudentResponseLastNameRegExp),
+  "grade": zod.string(),
+  "dateOfBirth": zod.string().regex(updateStudentResponseDateOfBirthRegExp),
+  "gender": zod.enum(['male', 'female']),
+  "address": zod.object({
+  "region": zod.string(),
+  "zone": zod.string(),
+  "kebele": zod.string(),
+  "houseNo": zod.string()
+}).nullish(),
+  "faydaId": zod.string().regex(updateStudentResponseFaydaIdRegExp).nullish(),
+  "enrollmentStatus": zod.enum(['active', 'inactive', 'withdrawn', 'transferred', 'graduated']),
+  "medicalInfo": zod.string().nullish(),
+  "emergencyContact": zod.string().nullish(),
+  "parentId": zod.string().nullish(),
+  "teacherId": zod.string().nullish(),
+  "parentName": zod.string().nullish(),
+  "teacherName": zod.string().nullish(),
+  "attendanceRate": zod.number().nullish(),
+  "averageScore": zod.number().nullish()
+})
+
+
+/**
+ * @summary Delete a student (admin only)
+ */
+export const DeleteStudentParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+
+/**
  * @summary Get all reports (role-filtered)
  */
+export const getReportsResponseDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
 export const GetReportsResponseItem = zod.object({
   "id": zod.string(),
   "studentId": zod.string(),
   "studentName": zod.string(),
   "subject": zod.string(),
   "score": zod.number().nullish(),
+  "midExam": zod.number().nullish(),
+  "tests": zod.number().nullish(),
+  "continuousAssessment": zod.number().nullish(),
+  "finalExam": zod.number().nullish(),
   "type": zod.enum(['grade', 'assessment', 'attendance']),
-  "date": zod.string(),
+  "date": zod.string().regex(getReportsResponseDateRegExp),
   "teacherId": zod.string(),
   "teacherName": zod.string(),
   "notes": zod.string().nullish(),
-  "term": zod.string().nullish()
+  "term": zod.string().nullish(),
+  "status": zod.enum(['Pass', 'Fail']).nullish()
 })
 export const GetReportsResponse = zod.array(GetReportsResponseItem)
 
@@ -109,14 +270,75 @@ export const GetReportsResponse = zod.array(GetReportsResponseItem)
 /**
  * @summary Create a new report (teacher/admin)
  */
+export const createReportBodyDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
 export const CreateReportBody = zod.object({
   "studentId": zod.string(),
   "subject": zod.string(),
   "score": zod.number().nullish(),
+  "midExam": zod.number().nullish(),
+  "tests": zod.number().nullish(),
+  "continuousAssessment": zod.number().nullish(),
+  "finalExam": zod.number().nullish(),
   "type": zod.enum(['grade', 'assessment', 'attendance']),
-  "date": zod.string(),
+  "date": zod.string().regex(createReportBodyDateRegExp),
   "notes": zod.string().nullish(),
   "term": zod.string().nullish()
+})
+
+
+/**
+ * @summary Update a report (teacher/admin)
+ */
+export const UpdateReportParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const updateReportBodyDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
+export const UpdateReportBody = zod.object({
+  "subject": zod.string().optional(),
+  "score": zod.number().nullish(),
+  "midExam": zod.number().nullish(),
+  "tests": zod.number().nullish(),
+  "continuousAssessment": zod.number().nullish(),
+  "finalExam": zod.number().nullish(),
+  "type": zod.enum(['grade', 'assessment', 'attendance']).optional(),
+  "date": zod.string().regex(updateReportBodyDateRegExp).optional(),
+  "notes": zod.string().nullish(),
+  "term": zod.string().nullish()
+})
+
+export const updateReportResponseDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
+export const UpdateReportResponse = zod.object({
+  "id": zod.string(),
+  "studentId": zod.string(),
+  "studentName": zod.string(),
+  "subject": zod.string(),
+  "score": zod.number().nullish(),
+  "midExam": zod.number().nullish(),
+  "tests": zod.number().nullish(),
+  "continuousAssessment": zod.number().nullish(),
+  "finalExam": zod.number().nullish(),
+  "type": zod.enum(['grade', 'assessment', 'attendance']),
+  "date": zod.string().regex(updateReportResponseDateRegExp),
+  "teacherId": zod.string(),
+  "teacherName": zod.string(),
+  "notes": zod.string().nullish(),
+  "term": zod.string().nullish(),
+  "status": zod.enum(['Pass', 'Fail']).nullish()
+})
+
+
+/**
+ * @summary Delete a report (teacher/admin)
+ */
+export const DeleteReportParams = zod.object({
+  "id": zod.coerce.string()
 })
 
 
@@ -127,18 +349,26 @@ export const GetStudentReportsParams = zod.object({
   "studentId": zod.coerce.string()
 })
 
+export const getStudentReportsResponseDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
 export const GetStudentReportsResponseItem = zod.object({
   "id": zod.string(),
   "studentId": zod.string(),
   "studentName": zod.string(),
   "subject": zod.string(),
   "score": zod.number().nullish(),
+  "midExam": zod.number().nullish(),
+  "tests": zod.number().nullish(),
+  "continuousAssessment": zod.number().nullish(),
+  "finalExam": zod.number().nullish(),
   "type": zod.enum(['grade', 'assessment', 'attendance']),
-  "date": zod.string(),
+  "date": zod.string().regex(getStudentReportsResponseDateRegExp),
   "teacherId": zod.string(),
   "teacherName": zod.string(),
   "notes": zod.string().nullish(),
-  "term": zod.string().nullish()
+  "term": zod.string().nullish(),
+  "status": zod.enum(['Pass', 'Fail']).nullish()
 })
 export const GetStudentReportsResponse = zod.array(GetStudentReportsResponseItem)
 
@@ -146,11 +376,14 @@ export const GetStudentReportsResponse = zod.array(GetStudentReportsResponseItem
 /**
  * @summary Get attendance records (role-filtered)
  */
+export const getAttendanceResponseDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
 export const GetAttendanceResponseItem = zod.object({
   "id": zod.string(),
   "studentId": zod.string(),
   "studentName": zod.string(),
-  "date": zod.string(),
+  "date": zod.string().regex(getAttendanceResponseDateRegExp),
   "status": zod.enum(['present', 'absent', 'late']),
   "teacherId": zod.string(),
   "notes": zod.string().nullish()
@@ -161,11 +394,49 @@ export const GetAttendanceResponse = zod.array(GetAttendanceResponseItem)
 /**
  * @summary Record attendance (teacher/admin)
  */
+export const createAttendanceBodyDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
 export const CreateAttendanceBody = zod.object({
   "studentId": zod.string(),
-  "date": zod.string(),
+  "date": zod.string().regex(createAttendanceBodyDateRegExp),
   "status": zod.enum(['present', 'absent', 'late']),
   "notes": zod.string().nullish()
+})
+
+
+/**
+ * @summary Update attendance record (teacher/admin)
+ */
+export const UpdateAttendanceParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateAttendanceBody = zod.object({
+  "date": zod.string().optional(),
+  "status": zod.enum(['present', 'absent', 'late']).optional(),
+  "notes": zod.string().nullish()
+})
+
+export const updateAttendanceResponseDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
+export const UpdateAttendanceResponse = zod.object({
+  "id": zod.string(),
+  "studentId": zod.string(),
+  "studentName": zod.string(),
+  "date": zod.string().regex(updateAttendanceResponseDateRegExp),
+  "status": zod.enum(['present', 'absent', 'late']),
+  "teacherId": zod.string(),
+  "notes": zod.string().nullish()
+})
+
+
+/**
+ * @summary Delete attendance record (teacher/admin)
+ */
+export const DeleteAttendanceParams = zod.object({
+  "id": zod.coerce.string()
 })
 
 
@@ -176,11 +447,14 @@ export const GetStudentAttendanceParams = zod.object({
   "studentId": zod.coerce.string()
 })
 
+export const getStudentAttendanceResponseDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
+
 export const GetStudentAttendanceResponseItem = zod.object({
   "id": zod.string(),
   "studentId": zod.string(),
   "studentName": zod.string(),
-  "date": zod.string(),
+  "date": zod.string().regex(getStudentAttendanceResponseDateRegExp),
   "status": zod.enum(['present', 'absent', 'late']),
   "teacherId": zod.string(),
   "notes": zod.string().nullish()
@@ -272,6 +546,65 @@ export const UpdateUserResponse = zod.object({
  * @summary Delete a user (admin only)
  */
 export const DeleteUserParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+
+/**
+ * @summary Get announcements (role-filtered)
+ */
+export const GetAnnouncementsResponseItem = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "content": zod.string(),
+  "targetRole": zod.enum(['all', 'teacher', 'parent']),
+  "authorId": zod.string(),
+  "authorName": zod.string(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const GetAnnouncementsResponse = zod.array(GetAnnouncementsResponseItem)
+
+
+/**
+ * @summary Create a new announcement (admin only)
+ */
+export const CreateAnnouncementBody = zod.object({
+  "title": zod.string(),
+  "content": zod.string(),
+  "targetRole": zod.enum(['all', 'teacher', 'parent']).optional()
+})
+
+
+/**
+ * @summary Update an announcement (admin only)
+ */
+export const UpdateAnnouncementParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateAnnouncementBody = zod.object({
+  "title": zod.string().optional(),
+  "content": zod.string().optional(),
+  "targetRole": zod.enum(['all', 'teacher', 'parent']).optional()
+})
+
+export const UpdateAnnouncementResponse = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "content": zod.string(),
+  "targetRole": zod.enum(['all', 'teacher', 'parent']),
+  "authorId": zod.string(),
+  "authorName": zod.string(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Delete an announcement (admin only)
+ */
+export const DeleteAnnouncementParams = zod.object({
   "id": zod.coerce.string()
 })
 

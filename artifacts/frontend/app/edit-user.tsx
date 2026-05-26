@@ -42,14 +42,46 @@ export default function EditUserScreen() {
     }
   }, [user]);
 
+  // --- Validation helpers ---
+  const NAME_REGEX = /^[a-zA-Z\u1200-\u137F\s]+$/;
+  const stripNonAlpha = (text: string) => text.replace(/[^a-zA-Z\u1200-\u137F\s]/g, "");
+  const handleNameChange = (text: string) => setName(stripNonAlpha(text));
+
   function handleSubmit() {
     if (!name.trim() || !email.trim()) {
       Alert.alert("Missing fields", "Name and email are required.");
       return;
     }
-    if (password && password.length < 6) {
-      Alert.alert("Weak password", "Password must be at least 6 characters.");
+    if (!NAME_REGEX.test(name.trim())) {
+      Alert.alert("Invalid Name", "Name must contain only letters (no numbers or special characters).");
       return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+    if (password) {
+      if (password.length < 8) {
+        Alert.alert("Weak Password", "Password must be at least 8 characters.");
+        return;
+      }
+      if (!/[a-z]/.test(password)) {
+        Alert.alert("Weak Password", "Password must contain at least one lowercase letter.");
+        return;
+      }
+      if (!/[A-Z]/.test(password)) {
+        Alert.alert("Weak Password", "Password must contain at least one uppercase letter.");
+        return;
+      }
+      if (!/[0-9]/.test(password)) {
+        Alert.alert("Weak Password", "Password must contain at least one number.");
+        return;
+      }
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        Alert.alert("Weak Password", 'Password must contain at least one special character (!@#$%^&* etc.).');
+        return;
+      }
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -99,10 +131,11 @@ export default function EditUserScreen() {
       <TextInput
         style={inputStyle(colors)}
         value={name}
-        onChangeText={setName}
+        onChangeText={handleNameChange}
         placeholder="Full name"
         placeholderTextColor={colors.mutedForeground}
         autoCapitalize="words"
+        maxLength={80}
       />
 
       <Text style={labelStyle(colors)}>Email Address</Text>
