@@ -1,9 +1,10 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Dimensions } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, Animated } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import { BlurView } from "expo-blur";
 
 import { useColors } from "@/hooks/useColors";
 
@@ -14,6 +15,43 @@ export default function WelcomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const cardsFadeAnim = useRef(new Animated.Value(0)).current;
+  const cardsSlideAnim = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.stagger(200, [
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        })
+      ]),
+      Animated.parallel([
+        Animated.timing(cardsFadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(cardsSlideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        })
+      ])
+    ]).start();
+  }, []);
+
   const handleLoginPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push("/login");
@@ -21,56 +59,112 @@ export default function WelcomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Dynamic Background Gradient */}
       <LinearGradient
-        colors={[colors.primary + "1A", colors.background]}
+        colors={[colors.primary + "30", colors.background, colors.background]}
+        locations={[0, 0.4, 1]}
         style={StyleSheet.absoluteFill}
       />
       
-      <View style={[styles.content, { paddingTop: Math.max(insets.top, 60), paddingBottom: Math.max(insets.bottom, 40) }]}>
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { backgroundColor: colors.primary, top: -50, left: -50 }]} />
+      <View style={[styles.orb, { backgroundColor: colors.tint, top: 150, right: -100, width: 250, height: 250 }]} />
+      
+      <View style={[styles.content, { paddingTop: Math.max(insets.top, 80), paddingBottom: Math.max(insets.bottom, 40) }]}>
         
-        <View style={styles.heroSection}>
-          <View style={[styles.iconContainer, { backgroundColor: colors.primary + "20" }]}>
-            <Text style={{ fontSize: 48 }}>🏫</Text>
+        <Animated.View 
+          style={[
+            styles.heroSection, 
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+          ]}
+        >
+          <View style={[styles.iconWrapper, { shadowColor: colors.primary }]}>
+            <LinearGradient
+              colors={[colors.card, colors.background]}
+              style={styles.iconGradient}
+            >
+              <Text style={styles.heroIcon}>🎓</Text>
+            </LinearGradient>
           </View>
           
           <Text style={[styles.title, { color: colors.foreground }]}>
-            Hamle <Text style={{ color: colors.primary }}>SIS</Text>
+            Hamle <Text style={{ color: colors.primary }}>Elementary</Text>
           </Text>
           
           <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-            Empowering education through seamless student information management.
+            A secure, unified portal connecting teachers, students, and parents to foster academic excellence.
           </Text>
-        </View>
+        </Animated.View>
 
-        <View style={styles.featuresSection}>
-          <FeatureItem icon="📝" title="Grades & Reports" desc="Track student progress with ease" colors={colors} />
-          <FeatureItem icon="📅" title="Attendance" desc="Monitor daily presence securely" colors={colors} />
-          <FeatureItem icon="🔒" title="Secure Access" desc="Role-based permissions for staff & parents" colors={colors} />
-        </View>
+        <Animated.View 
+          style={[
+            styles.featuresSection,
+            { opacity: cardsFadeAnim, transform: [{ translateY: cardsSlideAnim }] }
+          ]}
+        >
+          <FeatureCard 
+            icon="📊" 
+            title="Real-Time Insights" 
+            desc="Track academic progress, attendance, and behavioral reports instantly." 
+            colors={colors} 
+          />
+          <FeatureCard 
+            icon="🤝" 
+            title="Seamless Connection" 
+            desc="Direct communication channels bridging the gap between school and home." 
+            colors={colors} 
+          />
+          <FeatureCard 
+            icon="🔐" 
+            title="Role-Based Security" 
+            desc="Enterprise-grade data protection ensuring privacy for every user." 
+            colors={colors} 
+          />
+        </Animated.View>
 
-        <View style={styles.actionSection}>
+        <Animated.View 
+          style={[
+            styles.actionSection,
+            { opacity: cardsFadeAnim, transform: [{ translateY: cardsSlideAnim }] }
+          ]}
+        >
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.primary }]}
+            style={[styles.button, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
             onPress={handleLoginPress}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <Text style={styles.buttonText}>Log In to Continue</Text>
+            <LinearGradient
+              colors={["rgba(255,255,255,0.15)", "transparent"]}
+              style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
+            />
+            <Text style={[styles.buttonText, { color: colors.primaryForeground }]}>Access Portal</Text>
           </TouchableOpacity>
-        </View>
+          <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
+            Authorized Personnel & Guardians Only
+          </Text>
+        </Animated.View>
 
       </View>
     </View>
   );
 }
 
-function FeatureItem({ icon, title, desc, colors }: { icon: string, title: string, desc: string, colors: any }) {
+function FeatureCard({ icon, title, desc, colors }: { icon: string, title: string, desc: string, colors: any }) {
   return (
-    <View style={[styles.featureCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Text style={styles.featureIcon}>{icon}</Text>
-      <View style={styles.featureTextContainer}>
-        <Text style={[styles.featureTitle, { color: colors.foreground }]}>{title}</Text>
-        <Text style={[styles.featureDesc, { color: colors.mutedForeground }]}>{desc}</Text>
-      </View>
+    <View style={[styles.featureCardContainer, { shadowColor: colors.foreground }]}>
+      <BlurView 
+        intensity={Platform.OS === 'ios' ? 80 : 100} 
+        tint={colors.background === '#0B0F19' ? 'dark' : 'light'} 
+        style={[styles.featureCard, { borderColor: colors.border }]}
+      >
+        <View style={[styles.featureIconContainer, { backgroundColor: colors.primary + "15" }]}>
+          <Text style={styles.featureIcon}>{icon}</Text>
+        </View>
+        <View style={styles.featureTextContainer}>
+          <Text style={[styles.featureTitle, { color: colors.foreground }]}>{title}</Text>
+          <Text style={[styles.featureDesc, { color: colors.mutedForeground }]}>{desc}</Text>
+        </View>
+      </BlurView>
     </View>
   );
 }
@@ -78,36 +172,59 @@ function FeatureItem({ icon, title, desc, colors }: { icon: string, title: strin
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    overflow: "hidden",
+  },
+  orb: {
+    position: "absolute",
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.15,
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: "space-between",
+    zIndex: 1,
   },
   heroSection: {
     alignItems: "center",
-    marginTop: 40,
+    marginTop: 20,
   },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  iconWrapper: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    padding: 2,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    marginBottom: 32,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  iconGradient: {
+    flex: 1,
+    borderRadius: 53,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 24,
+  },
+  heroIcon: {
+    fontSize: 52,
   },
   title: {
-    fontSize: 42,
+    fontSize: 44,
     fontFamily: "Inter_700Bold",
     textAlign: "center",
-    marginBottom: 12,
+    marginBottom: 16,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
     fontFamily: "Inter_400Regular",
     textAlign: "center",
-    lineHeight: 24,
-    maxWidth: Platform.OS === "web" ? 500 : width * 0.8,
+    lineHeight: 26,
+    maxWidth: Platform.OS === "web" ? 500 : width * 0.85,
   },
   featuresSection: {
     flex: 1,
@@ -118,28 +235,45 @@ const styles = StyleSheet.create({
     gap: 16,
     marginVertical: 40,
   },
+  featureCardContainer: {
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
+  },
   featureCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    borderRadius: 16,
+    padding: 20,
     borderWidth: 1,
+    backgroundColor: Platform.OS === "android" ? "rgba(255,255,255,0.7)" : "transparent",
+  },
+  featureIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
   },
   featureIcon: {
     fontSize: 28,
-    marginRight: 16,
   },
   featureTextContainer: {
     flex: 1,
   },
   featureTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontFamily: "Inter_600SemiBold",
     marginBottom: 4,
+    letterSpacing: -0.2,
   },
   featureDesc: {
     fontSize: 14,
     fontFamily: "Inter_400Regular",
+    lineHeight: 20,
   },
   actionSection: {
     alignItems: "center",
@@ -149,19 +283,27 @@ const styles = StyleSheet.create({
   },
   button: {
     width: "100%",
-    height: 56,
+    height: 60,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
+    marginBottom: 16,
   },
   buttonText: {
     color: "#fff",
     fontSize: 18,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.5,
   },
+  footerText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    opacity: 0.7,
+  }
 });

@@ -39,7 +39,7 @@ const StudentSchema = new Schema<IStudent>(
       kebele: { type: String, default: "" },
       houseNo: { type: String, default: "" },
     },
-    faydaId: { type: String, unique: true, sparse: true, default: null, index: true },
+    faydaId: { type: String, unique: true, sparse: true, index: true },
     enrollmentStatus: {
       type: String,
       enum: ["active", "inactive", "withdrawn", "transferred", "graduated"],

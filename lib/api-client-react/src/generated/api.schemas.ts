@@ -40,6 +40,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  recoveryEmail: string;
   role: UserRole;
   createdAt: string;
   securityQuestion1?: string;
@@ -75,6 +76,7 @@ export interface UserDetail {
   id: string;
   name: string;
   email: string;
+  recoveryEmail: string;
   role: UserDetailRole;
   studentCount: number;
 }
@@ -91,6 +93,7 @@ export const CreateUserRequestRole = {
 export interface CreateUserRequest {
   name: string;
   email: string;
+  recoveryEmail: string;
   password: string;
   role: CreateUserRequestRole;
   securityQuestion1?: string;
@@ -111,6 +114,7 @@ export const UpdateUserRequestRole = {
 export interface UpdateUserRequest {
   name: string;
   email: string;
+  recoveryEmail: string;
   password?: string;
   role: UpdateUserRequestRole;
   securityQuestion1?: string;
@@ -166,6 +170,8 @@ export interface Student {
   teacherId?: string | null;
   parentName?: string | null;
   teacherName?: string | null;
+  parentEmail?: string | null;
+  teacherEmail?: string | null;
   attendanceRate?: number | null;
   averageScore?: number | null;
 }

@@ -30,6 +30,7 @@ export const LoginResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "email": zod.string().email(),
+  "recoveryEmail": zod.string().email(),
   "role": zod.enum(['admin', 'teacher', 'parent']),
   "createdAt": zod.coerce.date(),
   "securityQuestion1": zod.string().optional(),
@@ -45,6 +46,7 @@ export const GetMeResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "email": zod.string().email(),
+  "recoveryEmail": zod.string().email(),
   "role": zod.enum(['admin', 'teacher', 'parent']),
   "createdAt": zod.coerce.date(),
   "securityQuestion1": zod.string().optional(),
@@ -123,6 +125,8 @@ export const GetStudentsResponseItem = zod.object({
   "teacherId": zod.string().nullish(),
   "parentName": zod.string().nullish(),
   "teacherName": zod.string().nullish(),
+  "parentEmail": zod.string().nullish(),
+  "teacherEmail": zod.string().nullish(),
   "attendanceRate": zod.number().nullish(),
   "averageScore": zod.number().nullish()
 })
@@ -194,6 +198,8 @@ export const GetStudentResponse = zod.object({
   "teacherId": zod.string().nullish(),
   "parentName": zod.string().nullish(),
   "teacherName": zod.string().nullish(),
+  "parentEmail": zod.string().nullish(),
+  "teacherEmail": zod.string().nullish(),
   "attendanceRate": zod.number().nullish(),
   "averageScore": zod.number().nullish()
 })
@@ -260,6 +266,8 @@ export const UpdateStudentResponse = zod.object({
   "teacherId": zod.string().nullish(),
   "parentName": zod.string().nullish(),
   "teacherName": zod.string().nullish(),
+  "parentEmail": zod.string().nullish(),
+  "teacherEmail": zod.string().nullish(),
   "attendanceRate": zod.number().nullish(),
   "averageScore": zod.number().nullish()
 })
@@ -519,6 +527,7 @@ export const GetUsersResponseItem = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
+  "recoveryEmail": zod.string(),
   "role": zod.enum(['admin', 'teacher', 'parent']),
   "studentCount": zod.number()
 })
@@ -531,6 +540,7 @@ export const GetUsersResponse = zod.array(GetUsersResponseItem)
 export const CreateUserBody = zod.object({
   "name": zod.string(),
   "email": zod.string().email(),
+  "recoveryEmail": zod.string().email(),
   "password": zod.string(),
   "role": zod.enum(['admin', 'teacher', 'parent']),
   "securityQuestion1": zod.string().optional(),
@@ -551,6 +561,7 @@ export const GetUserResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
+  "recoveryEmail": zod.string(),
   "role": zod.enum(['admin', 'teacher', 'parent']),
   "studentCount": zod.number()
 })
@@ -566,6 +577,7 @@ export const UpdateUserParams = zod.object({
 export const UpdateUserBody = zod.object({
   "name": zod.string(),
   "email": zod.string().email(),
+  "recoveryEmail": zod.string().email(),
   "password": zod.string().optional(),
   "role": zod.enum(['admin', 'teacher', 'parent']),
   "securityQuestion1": zod.string().optional(),
@@ -578,6 +590,7 @@ export const UpdateUserResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
+  "recoveryEmail": zod.string(),
   "role": zod.enum(['admin', 'teacher', 'parent']),
   "studentCount": zod.number()
 })

@@ -9,6 +9,7 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  recoveryEmail?: string | null;
   role: "admin" | "teacher" | "parent";
   securityQuestion1?: string | null;
   securityQuestion2?: string | null;
@@ -20,6 +21,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (token: string, user: AuthUser) => Promise<void>;
   logout: () => Promise<void>;
+  updateUserContext: (updates: Partial<AuthUser>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -28,6 +30,7 @@ const AuthContext = createContext<AuthContextValue>({
   isLoading: true,
   login: async () => {},
   logout: async () => {},
+  updateUserContext: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -75,8 +78,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthTokenGetter(null);
   }, []);
 
+  const updateUserContext = useCallback(async (updates: Partial<AuthUser>) => {
+    setUser((curr) => {
+      if (!curr) return null;
+      const updated = { ...curr, ...updates };
+      AsyncStorage.setItem(USER_KEY, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout, updateUserContext }}>
       {children}
     </AuthContext.Provider>
   );

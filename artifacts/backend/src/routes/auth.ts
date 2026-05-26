@@ -76,6 +76,7 @@ router.post("/auth/login", loginLimiter, async (req, res): Promise<void> => {
       id: user.id, 
       name: user.name, 
       email: user.email, 
+      recoveryEmail: user.recoveryEmail,
       role: user.role,
       securityQuestion1: user.securityQuestion1,
       securityQuestion2: user.securityQuestion2
@@ -94,6 +95,7 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
     id: user.id, 
     name: user.name, 
     email: user.email, 
+    recoveryEmail: user.recoveryEmail,
     role: user.role,
     securityQuestion1: user.securityQuestion1,
     securityQuestion2: user.securityQuestion2
@@ -202,7 +204,7 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
   // Email the password
   try {
     await sendMail({
-      to: user.email,
+      to: user.recoveryEmail,
       subject: "Your Temporary Password for Hamle SIS",
       text: `Hello ${user.name},\n\nYour password has been reset. Your temporary password is: ${tempPassword}\n\nPlease log in and change your password immediately in your Profile tab.\n\nThank you,\nHamle Elementary School`,
       html: `<p>Hello <strong>${user.name}</strong>,</p>

@@ -39,12 +39,24 @@ const CHART_COLORS = ["#1B3D7A", "#7C3AED", "#16A34A", "#D97706", "#DC2626", "#0
 
 function ReportCard({ report }: { report: Report }) {
   const colors = useColors();
-  const typeInfo = TYPE_COLORS[report.type] ?? TYPE_COLORS["grade"];
+  const router = useRouter();
+  const typeInfo = TYPE_COLORS[report.type] ?? TYPE_COLORS["grade"]!;
   const isPass = report.status === "Pass";
   return (
     <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-        <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground, flex: 1 }}>{report.studentName}</Text>
+        <TouchableOpacity
+          onPress={() => router.push(`/student/${report.studentId}` as any)}
+          activeOpacity={0.7}
+          style={{ flex: 1, marginRight: 8 }}
+        >
+          <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.primary }}>
+            {report.studentName}
+          </Text>
+          <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 1 }}>
+            Tap to view student profile
+          </Text>
+        </TouchableOpacity>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           {report.status && (
             <View style={{ borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: isPass ? "#D1FAE5" : "#FEE2E2" }}>
@@ -172,6 +184,13 @@ export default function ReportsScreen() {
     return map;
   }, [reports, studentGradeMap]);
 
+  const visibleGrades = useMemo(() => {
+    if (user?.role === "admin") return GRADES;
+    const activeGrades = new Set<string>();
+    students?.forEach((s) => activeGrades.add(s.grade));
+    return GRADES.filter((g) => activeGrades.has(g));
+  }, [user, students]);
+
   const ListHeader = (
     <View style={{ paddingTop: top + 16, paddingHorizontal: 20 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -202,7 +221,7 @@ export default function ReportsScreen() {
             All Grades
           </Text>
         </TouchableOpacity>
-        {GRADES.map((g) => {
+        {visibleGrades.map((g) => {
           const count = gradeReportCount.get(g) ?? 0;
           const isSelected = selectedGrade === g;
           return (

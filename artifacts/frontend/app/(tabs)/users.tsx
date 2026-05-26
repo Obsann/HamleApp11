@@ -29,19 +29,23 @@ type RoleFilter = "all" | "teacher" | "parent";
 
 function UserCard({
   user,
+  onPress,
   onEdit,
   onDelete,
 }: {
   user: UserDetail;
+  onPress: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
   const colors = useColors();
-  const cfg = ROLE_CONFIG[user.role] ?? ROLE_CONFIG.teacher;
+  const cfg = ROLE_CONFIG[user.role as keyof typeof ROLE_CONFIG] ?? ROLE_CONFIG.teacher;
   const initials = user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
   return (
-    <View
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.88}
       style={{
         backgroundColor: colors.card,
         borderRadius: 16,
@@ -54,6 +58,8 @@ function UserCard({
         elevation: 2,
         flexDirection: "row",
         alignItems: "center",
+        borderLeftWidth: 3,
+        borderLeftColor: cfg.text,
       }}
     >
       <View
@@ -86,6 +92,14 @@ function UserCard({
           <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
             {user.studentCount} {user.studentCount === 1 ? "student" : "students"}
           </Text>
+          {user.role !== "admin" && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+              <Feather name="users" size={11} color={colors.primary} />
+              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.primary }}>
+                View students →
+              </Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -103,7 +117,7 @@ function UserCard({
           <Feather name="trash-2" size={16} color="#DC2626" />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -125,6 +139,15 @@ export default function UsersScreen() {
     { key: "teacher", label: "Teachers" },
     { key: "parent", label: "Parents" },
   ];
+
+  function handleUserPress(user: UserDetail) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (user.role === "teacher") {
+      router.push({ pathname: "/(tabs)/students", params: { teacherId: user.id, teacherName: user.name } } as any);
+    } else if (user.role === "parent") {
+      router.push({ pathname: "/(tabs)/students", params: { parentId: user.id, parentName: user.name } } as any);
+    }
+  }
 
   function handleDelete(user: UserDetail) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -212,6 +235,15 @@ export default function UsersScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+        {filter !== "teacher" && (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <Feather name="info" size={13} color={colors.mutedForeground} />
+            <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
+              Tap a teacher or parent to view their students
+            </Text>
+          </View>
+        )}
       </View>
 
       {isLoading ? (
@@ -223,6 +255,7 @@ export default function UsersScreen() {
           renderItem={({ item }) => (
             <UserCard
               user={item}
+              onPress={() => handleUserPress(item)}
               onEdit={() => router.push({ pathname: "/edit-user", params: { id: item.id } })}
               onDelete={() => handleDelete(item)}
             />

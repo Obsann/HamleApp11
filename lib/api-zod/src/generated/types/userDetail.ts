@@ -11,6 +11,7 @@ export interface UserDetail {
   id: string;
   name: string;
   email: string;
+  recoveryEmail: string;
   role: UserDetailRole;
   studentCount: number;
 }

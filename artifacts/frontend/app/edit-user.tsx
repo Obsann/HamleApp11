@@ -31,6 +31,7 @@ export default function EditUserScreen() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [recoveryEmail, setRecoveryEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("teacher");
 
@@ -38,6 +39,7 @@ export default function EditUserScreen() {
     if (user) {
       setName(user.name);
       setEmail(user.email);
+      setRecoveryEmail(user.recoveryEmail || "");
       setRole(user.role as Role);
     }
   }, [user]);
@@ -92,6 +94,7 @@ export default function EditUserScreen() {
         data: {
           name: name.trim(),
           email: email.trim().toLowerCase(),
+          recoveryEmail: recoveryEmail.trim().toLowerCase() || email.trim().toLowerCase(),
           password: password || undefined,
           role,
         },
@@ -144,6 +147,18 @@ export default function EditUserScreen() {
         value={email}
         onChangeText={setEmail}
         placeholder="Email"
+        placeholderTextColor={colors.mutedForeground}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+
+      <Text style={labelStyle(colors)}>Recovery Email Address (Optional)</Text>
+      <TextInput
+        style={inputStyle(colors)}
+        value={recoveryEmail}
+        onChangeText={setRecoveryEmail}
+        placeholder="Recovery Email"
         placeholderTextColor={colors.mutedForeground}
         keyboardType="email-address"
         autoCapitalize="none"

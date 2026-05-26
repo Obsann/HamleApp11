@@ -1,24 +1,28 @@
 import { useColorScheme } from "react-native";
+import { useAuth } from "@/context/AuthContext";
 
 import colors from "@/constants/colors";
 
 /**
- * Returns the design tokens for the current color scheme.
- *
- * The returned object contains all color tokens for the active palette
- * plus scheme-independent values like `radius`.
- *
- * Falls back to the light palette when no dark key is defined in
- * constants/colors.ts (the scaffold ships light-only by default).
- * When a sibling web artifact's dark tokens are synced into a `dark`
- * key, this hook will automatically switch palettes based on the
- * device's appearance setting.
+ * Returns the design tokens for the current color scheme and user role.
  */
 export function useColors() {
   const scheme = useColorScheme();
-  const palette =
-    scheme === "dark" && "dark" in colors
-      ? (colors as any).dark
-      : colors.light;
+  const { user } = useAuth();
+  
+  const role = user?.role;
+  const isDark = scheme === "dark";
+
+  let palette;
+  if (role === "admin") {
+    palette = isDark ? colors.adminDark : colors.adminLight;
+  } else if (role === "teacher") {
+    palette = isDark ? colors.teacherDark : colors.teacherLight;
+  } else if (role === "parent") {
+    palette = isDark ? colors.parentDark : colors.parentLight;
+  } else {
+    palette = isDark ? colors.defaultDark : colors.defaultLight;
+  }
+
   return { ...palette, radius: colors.radius };
 }

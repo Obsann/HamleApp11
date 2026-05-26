@@ -28,6 +28,7 @@ export default function AddUserScreen() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [recoveryEmail, setRecoveryEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<Role>("teacher");
@@ -104,6 +105,7 @@ export default function AddUserScreen() {
       data: {
         name: name.trim(),
         email: email.trim().toLowerCase(),
+        recoveryEmail: recoveryEmail.trim().toLowerCase() || email.trim().toLowerCase(),
         password,
         role,
       },
@@ -153,6 +155,18 @@ export default function AddUserScreen() {
         value={email}
         onChangeText={setEmail}
         placeholder="e.g. tigist@hamle.edu"
+        placeholderTextColor={colors.mutedForeground}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+      
+      <Text style={[labelStyle, { color: colors.foreground }]}>Recovery Email Address (Optional)</Text>
+      <TextInput
+        style={[inputStyle, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border }]}
+        value={recoveryEmail}
+        onChangeText={setRecoveryEmail}
+        placeholder="e.g. personal@email.com"
         placeholderTextColor={colors.mutedForeground}
         keyboardType="email-address"
         autoCapitalize="none"

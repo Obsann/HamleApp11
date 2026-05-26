@@ -10,7 +10,8 @@ export default function TabLayout() {
   const colors = useColors();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  const isTeacherOrAdmin = isAdmin || user?.role === "teacher";
+  const isTeacher = user?.role === "teacher";
+  const isParent = user?.role === "parent";
 
   return (
     <Tabs
@@ -35,20 +36,21 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Dashboard",
+          href: isParent ? null : undefined, // Hide global dashboard for parents
           tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="students"
         options={{
-          title: "Students",
+          title: isParent ? "My Children" : "Students",
           tabBarIcon: ({ color, size }) => <Feather name="users" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="reports"
         options={{
-          title: "Reports",
+          title: isParent ? "Report Cards" : "Grading",
           tabBarIcon: ({ color, size }) => <Feather name="file-text" size={size} color={color} />,
         }}
       />
@@ -56,13 +58,14 @@ export default function TabLayout() {
         name="attendance"
         options={{
           title: "Attendance",
+          href: isParent ? null : undefined, // Assuming parents see attendance via the student profile
           tabBarIcon: ({ color, size }) => <Feather name="check-circle" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="announcements"
         options={{
-          title: "Announcements",
+          title: isParent ? "Notices" : "Announcements",
           tabBarIcon: ({ color, size }) => <Feather name="bell" size={size} color={color} />,
         }}
       />
@@ -70,7 +73,7 @@ export default function TabLayout() {
         name="users"
         options={{
           title: "Users",
-          href: isAdmin ? undefined : null,
+          href: isAdmin ? undefined : null, // Only admin
           tabBarIcon: ({ color, size }) => <Feather name="shield" size={size} color={color} />,
         }}
       />

@@ -39,7 +39,13 @@ router.get("/attendance", requireAuth, async (req, res): Promise<void> => {
   if (user.role === "admin") {
     // Admin has access to all records
   } else if (user.role === "teacher") {
-    query = { teacherId: user.userId };
+    const myStudents = await StudentModel.find({ teacherId: user.userId }).select("_id");
+    const ids = myStudents.map((s) => s._id);
+    if (ids.length === 0) {
+      res.json([]);
+      return;
+    }
+    query = { studentId: { $in: ids } };
   } else {
     // Parent gets attendance for their students
     const myStudents = await StudentModel.find({ parentId: user.userId }).select("_id");

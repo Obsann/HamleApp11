@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Platform,
   RefreshControl,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -25,7 +25,7 @@ function StudentCard({ student, onPress }: { student: Student; onPress: () => vo
   const initials = `${student.firstName[0]}${student.lastName[0]}`.toUpperCase();
   const gradeColors = ["#1B3D7A", "#7C3AED", "#16A34A", "#D97706", "#DC2626"];
   const colorIndex = student.grade.charCodeAt(student.grade.length - 1) % gradeColors.length;
-  const avatarColor = gradeColors[colorIndex];
+  const avatarColor = gradeColors[colorIndex]!;
 
   return (
     <TouchableOpacity
@@ -42,6 +42,11 @@ function StudentCard({ student, onPress }: { student: Student; onPress: () => vo
         {student.teacherName && (
           <Text style={[styles.meta, { color: colors.mutedForeground }]}>
             <Feather name="user" size={11} /> {student.teacherName}
+          </Text>
+        )}
+        {student.parentName && (
+          <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+            <Feather name="home" size={11} /> {student.parentName}
           </Text>
         )}
       </View>
@@ -85,27 +90,67 @@ export default function StudentsScreen() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
 
+  // Read pre-filter params from navigation (e.g. from Users screen)
+  const params = useLocalSearchParams<{
+    teacherId?: string;
+    teacherName?: string;
+    parentId?: string;
+    parentName?: string;
+  }>();
+  const filterTeacherId = params.teacherId;
+  const filterTeacherName = params.teacherName;
+  const filterParentId = params.parentId;
+  const filterParentName = params.parentName;
+
+  const hasExternalFilter = !!filterTeacherId || !!filterParentId;
+
   const { data: students, isLoading, refetch, isRefetching } = useGetStudents();
 
   const isAdmin = user?.role === "admin";
 
-  const filtered = students?.filter((s) => {
-    const q = search.toLowerCase();
-    return (
-      s.firstName.toLowerCase().includes(q) ||
-      s.lastName.toLowerCase().includes(q) ||
-      s.grade.toLowerCase().includes(q)
-    );
-  }) ?? [];
-
   const top = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
+
+  const filtered = useMemo(() => {
+    let list = students ?? [];
+
+    // Apply external filter from Users screen navigation
+    if (filterTeacherId) {
+      list = list.filter((s) => s.teacherId === filterTeacherId);
+    } else if (filterParentId) {
+      list = list.filter((s) => s.parentId === filterParentId);
+    }
+
+    // Apply local search filter
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (s) =>
+          s.firstName.toLowerCase().includes(q) ||
+          s.lastName.toLowerCase().includes(q) ||
+          s.grade.toLowerCase().includes(q)
+      );
+    }
+
+    return list;
+  }, [students, filterTeacherId, filterParentId, search]);
+
+  // Compute filter banner label
+  const filterBannerLabel = filterTeacherName
+    ? `Teacher: ${filterTeacherName}`
+    : filterParentName
+    ? `Parent: ${filterParentName}`
+    : null;
+
+  function clearExternalFilter() {
+    router.setParams({ teacherId: undefined, teacherName: undefined, parentId: undefined, parentName: undefined } as any);
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ paddingTop: top + 16, paddingHorizontal: 20, paddingBottom: 8 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-            Students
+            {user?.role === "parent" ? "My Children" : "Students"}
           </Text>
           {isAdmin && (
             <TouchableOpacity
@@ -128,6 +173,42 @@ export default function StudentsScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* External filter banner */}
+        {hasExternalFilter && filterBannerLabel && (
+          <View style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: colors.primary + "15",
+            borderRadius: 10,
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+            marginBottom: 10,
+            borderWidth: 1,
+            borderColor: colors.primary + "30",
+          }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Feather name="filter" size={14} color={colors.primary} />
+              <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.primary }}>
+                Filtered by {filterBannerLabel}
+              </Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
+                ({filtered.length} student{filtered.length !== 1 ? "s" : ""})
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={clearExternalFilter}
+              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+            >
+              <Feather name="x-circle" size={16} color={colors.mutedForeground} />
+              <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>
+                Clear
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={{
           flexDirection: "row", alignItems: "center",
           backgroundColor: colors.card, borderRadius: 12,
@@ -170,7 +251,11 @@ export default function StudentsScreen() {
             <View style={{ alignItems: "center", marginTop: 60 }}>
               <Feather name="users" size={40} color={colors.mutedForeground} />
               <Text style={{ fontSize: 16, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginTop: 12 }}>
-                {search ? "No students match your search" : "No students found"}
+                {hasExternalFilter
+                  ? `No students found for this ${filterTeacherId ? "teacher" : "parent"}`
+                  : search
+                  ? "No students match your search"
+                  : "No students found"}
               </Text>
             </View>
           }

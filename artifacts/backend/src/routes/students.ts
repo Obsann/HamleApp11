@@ -270,19 +270,26 @@ router.get("/students/:id", requireAuth, async (req, res): Promise<void> => {
   const user = req.user!;
 
   const student = await StudentModel.findById(rawId)
-    .populate("parentId", "name")
-    .populate("teacherId", "name");
+    .populate("parentId", "name email")
+    .populate("teacherId", "name email");
 
   if (!student) {
     res.status(404).json({ message: "Student not found" });
     return;
   }
 
-  if (user.role === "parent" && student.parentId?.toString() !== user.userId) {
+  const parentIdStr = student.parentId
+    ? ((student.parentId as any)._id?.toString() ?? student.parentId.toString())
+    : null;
+  const teacherIdStr = student.teacherId
+    ? ((student.teacherId as any)._id?.toString() ?? student.teacherId.toString())
+    : null;
+
+  if (user.role === "parent" && parentIdStr !== user.userId) {
     res.status(403).json({ message: "Forbidden" });
     return;
   }
-  if (user.role === "teacher" && student.teacherId?.toString() !== user.userId) {
+  if (user.role === "teacher" && teacherIdStr !== user.userId) {
     res.status(403).json({ message: "Forbidden" });
     return;
   }
@@ -298,17 +305,18 @@ router.get("/students/:id", requireAuth, async (req, res): Promise<void> => {
   const averageScore = grades.length > 0 ? Math.round((totalScore / grades.length) * 10) / 10 : null;
 
   const parentName = student.parentId && typeof student.parentId === "object" && "name" in student.parentId ? (student.parentId as any).name : null;
+  const parentEmail = student.parentId && typeof student.parentId === "object" && "email" in student.parentId ? (student.parentId as any).email : null;
   const teacherName = student.teacherId && typeof student.teacherId === "object" && "name" in student.teacherId ? (student.teacherId as any).name : null;
-
-  const parentIdStr = student.parentId ? ((student.parentId as any)._id?.toString() ?? (student.parentId as any).toString()) : null;
-  const teacherIdStr = student.teacherId ? ((student.teacherId as any)._id?.toString() ?? (student.teacherId as any).toString()) : null;
+  const teacherEmail = student.teacherId && typeof student.teacherId === "object" && "email" in student.teacherId ? (student.teacherId as any).email : null;
 
   res.json({
     ...student.toJSON(),
     parentId: parentIdStr,
     teacherId: teacherIdStr,
     parentName,
+    parentEmail,
     teacherName,
+    teacherEmail,
     attendanceRate,
     averageScore,
   });

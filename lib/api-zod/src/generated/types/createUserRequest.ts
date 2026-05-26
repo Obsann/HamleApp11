@@ -10,6 +10,7 @@ import type { CreateUserRequestRole } from './createUserRequestRole';
 export interface CreateUserRequest {
   name: string;
   email: string;
+  recoveryEmail: string;
   password: string;
   role: CreateUserRequestRole;
   securityQuestion1?: string;

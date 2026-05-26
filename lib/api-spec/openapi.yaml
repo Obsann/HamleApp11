@@ -1031,6 +1031,12 @@ components:
         teacherName:
           type: string
           nullable: true
+        parentEmail:
+          type: string
+          nullable: true
+        teacherEmail:
+          type: string
+          nullable: true
         attendanceRate:
           type: number
           nullable: true

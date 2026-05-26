@@ -21,7 +21,7 @@ import { useChangePassword, useUpdateUser } from "@workspace/api-client-react";
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUserContext } = useAuth();
   const systemScheme = useColorScheme();
 
   const { mutate: changePassword, isPending } = useChangePassword();
@@ -34,6 +34,7 @@ export default function ProfileScreen() {
 
   // Profile Update State
   const [email, setEmail] = useState(user?.email || "");
+  const [recoveryEmail, setRecoveryEmail] = useState(user?.recoveryEmail || "");
   const [question1, setQuestion1] = useState(user?.securityQuestion1 || "");
   const [answer1, setAnswer1] = useState("");
   const [question2, setQuestion2] = useState(user?.securityQuestion2 || "");
@@ -46,12 +47,7 @@ export default function ProfileScreen() {
       ? "Teacher"
       : "Parent Guardian";
 
-  const roleColor =
-    user?.role === "admin"
-      ? "#7C3AED"
-      : user?.role === "teacher"
-      ? "#1B3D7A"
-      : "#16A34A";
+  const roleColor = colors.primary;
 
   const handlePasswordChange = () => {
     if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
@@ -117,7 +113,8 @@ export default function ProfileScreen() {
 
     // Prepare update payload
     const payload: any = {
-      email: email.trim()
+      email: email.trim(),
+      recoveryEmail: recoveryEmail.trim() || undefined,
     };
 
     // If they want to update questions, they must provide all fields
@@ -140,6 +137,14 @@ export default function ProfileScreen() {
         onSuccess: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           Alert.alert("Success", "Profile updated successfully! If you changed your email, you will need to use it for your next login.");
+          
+          updateUserContext({
+            email: email.trim(),
+            recoveryEmail: recoveryEmail.trim() || null,
+            securityQuestion1: question1.trim() || null,
+            securityQuestion2: question2.trim() || null,
+          });
+
           if (isUpdatingQuestions) {
             setAnswer1("");
             setAnswer2("");
@@ -191,12 +196,23 @@ export default function ProfileScreen() {
       <Text style={styles.sectionTitle}>Security Settings</Text>
       <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         
-        <Text style={[styles.inputLabel, { color: colors.foreground }]}>Email Address (For Login & Recovery)</Text>
+        <Text style={[styles.inputLabel, { color: colors.foreground }]}>Login Email Address</Text>
         <TextInput
           style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
           value={email}
           onChangeText={setEmail}
           placeholder="your@email.com"
+          placeholderTextColor={colors.mutedForeground}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        
+        <Text style={[styles.inputLabel, { color: colors.foreground }]}>Recovery Email Address (Optional)</Text>
+        <TextInput
+          style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
+          value={recoveryEmail}
+          onChangeText={setRecoveryEmail}
+          placeholder="recovery@email.com"
           placeholderTextColor={colors.mutedForeground}
           keyboardType="email-address"
           autoCapitalize="none"

@@ -82,7 +82,7 @@ export default function DashboardScreen() {
 
   const styles = makeStyles(colors, insets);
   const roleLabel = user?.role === "admin" ? "Administrator" : user?.role === "teacher" ? "Teacher" : "Parent";
-  const roleColor = user?.role === "admin" ? "#7C3AED" : user?.role === "teacher" ? "#1B3D7A" : "#16A34A";
+  const roleColor = colors.primary;
 
   return (
     <ScrollView
@@ -167,48 +167,61 @@ export default function DashboardScreen() {
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsGrid}>
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: colors.primary }]}
+              style={styles.actionBtn}
               onPress={() => router.push("/(tabs)/students")}
               activeOpacity={0.85}
             >
-              <Feather name="users" size={22} color="#fff" />
+              <View style={[styles.actionIconWrap, { backgroundColor: colors.primary + "15" }]}>
+                <Feather name="users" size={22} color={colors.primary} />
+              </View>
               <Text style={styles.actionBtnText}>View Students</Text>
             </TouchableOpacity>
+            
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: "#F59E0B" }]}
+              style={styles.actionBtn}
               onPress={() => router.push("/(tabs)/reports")}
               activeOpacity={0.85}
             >
-              <Feather name="file-text" size={22} color="#fff" />
+              <View style={[styles.actionIconWrap, { backgroundColor: colors.primary + "15" }]}>
+                <Feather name="file-text" size={22} color={colors.primary} />
+              </View>
               <Text style={styles.actionBtnText}>View Reports</Text>
             </TouchableOpacity>
+            
             {(user?.role === "admin" || user?.role === "teacher") && (
               <>
                 <TouchableOpacity
-                  style={[styles.actionBtn, { backgroundColor: "#16A34A" }]}
+                  style={styles.actionBtn}
                   onPress={() => router.push("/add-attendance")}
                   activeOpacity={0.85}
                 >
-                  <Feather name="check-square" size={22} color="#fff" />
+                  <View style={[styles.actionIconWrap, { backgroundColor: colors.primary + "15" }]}>
+                    <Feather name="check-square" size={22} color={colors.primary} />
+                  </View>
                   <Text style={styles.actionBtnText}>Record Attendance</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.actionBtn, { backgroundColor: "#7C3AED" }]}
+                  style={styles.actionBtn}
                   onPress={() => router.push("/add-report")}
                   activeOpacity={0.85}
                 >
-                  <Feather name="edit" size={22} color="#fff" />
+                  <View style={[styles.actionIconWrap, { backgroundColor: colors.primary + "15" }]}>
+                    <Feather name="edit" size={22} color={colors.primary} />
+                  </View>
                   <Text style={styles.actionBtnText}>Add Report</Text>
                 </TouchableOpacity>
               </>
             )}
+            
             {user?.role === "admin" && (
               <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: "#0F766E" }]}
+                style={styles.actionBtn}
                 onPress={() => router.push("/(tabs)/users")}
                 activeOpacity={0.85}
               >
-                <Feather name="shield" size={22} color="#fff" />
+                <View style={[styles.actionIconWrap, { backgroundColor: colors.primary + "15" }]}>
+                  <Feather name="shield" size={22} color={colors.primary} />
+                </View>
                 <Text style={styles.actionBtnText}>Manage Users</Text>
               </TouchableOpacity>
             )}
@@ -248,11 +261,31 @@ function makeStyles(colors: ReturnType<typeof useColors>, insets: ReturnType<typ
     actionBtn: {
       flex: 1,
       minWidth: "44%",
-      borderRadius: 14,
-      padding: 18,
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 16,
       alignItems: "center",
-      gap: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.04,
+      shadowRadius: 8,
+      elevation: 2,
     },
-    actionBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff", textAlign: "center" },
+    actionIconWrap: {
+      width: 48,
+      height: 48,
+      borderRadius: 14,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 12,
+    },
+    actionBtnText: { 
+      fontSize: 14, 
+      fontFamily: "Inter_600SemiBold", 
+      color: colors.foreground, 
+      textAlign: "center" 
+    },
   });
 }

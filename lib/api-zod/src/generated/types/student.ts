@@ -30,6 +30,8 @@ export interface Student {
   teacherId?: string | null;
   parentName?: string | null;
   teacherName?: string | null;
+  parentEmail?: string | null;
+  teacherEmail?: string | null;
   attendanceRate?: number | null;
   averageScore?: number | null;
 }

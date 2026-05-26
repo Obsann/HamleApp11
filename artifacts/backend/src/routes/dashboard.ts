@@ -61,15 +61,16 @@ router.get("/dashboard/summary", requireAuth, async (req, res): Promise<void> =>
       date: { $gte: sevenDaysAgo },
     });
 
+    const totalAttendanceCount = await AttendanceModel.countDocuments({ studentId: { $in: myIds } });
+    const totalPresentCount = await AttendanceModel.countDocuments({ studentId: { $in: myIds }, status: "present" });
+    const rate = totalAttendanceCount > 0 ? (totalPresentCount / totalAttendanceCount) * 100 : 100;
+
     res.json({
       totalStudents: myCount,
       presentToday,
       absentToday,
       recentReports,
-      attendanceRate:
-        myCount > 0
-          ? Math.round((presentToday / myCount) * 1000) / 10
-          : 100,
+      attendanceRate: Math.round(rate * 10) / 10,
       myStudents: myCount,
     });
   } else {
@@ -93,15 +94,16 @@ router.get("/dashboard/summary", requireAuth, async (req, res): Promise<void> =>
       date: { $gte: sevenDaysAgo },
     });
 
+    const totalAttendanceCount = await AttendanceModel.countDocuments({ studentId: { $in: myIds } });
+    const totalPresentCount = await AttendanceModel.countDocuments({ studentId: { $in: myIds }, status: "present" });
+    const rate = totalAttendanceCount > 0 ? (totalPresentCount / totalAttendanceCount) * 100 : 100;
+
     res.json({
       totalStudents: myStudents.length,
       presentToday,
       absentToday,
       recentReports,
-      attendanceRate:
-        myStudents.length > 0
-          ? Math.round((presentToday / myStudents.length) * 1000) / 10
-          : 100,
+      attendanceRate: Math.round(rate * 10) / 10,
       myStudents: myStudents.length,
     });
   }

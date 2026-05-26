@@ -55,6 +55,7 @@ router.get(
       id: user.id ?? user._id?.toString(),
       name: user.name,
       email: user.email,
+      recoveryEmail: user.recoveryEmail,
       role: user.role,
       studentCount: countMap.get(user._id.toString()) ?? 0,
     }));
@@ -75,7 +76,7 @@ router.post(
         res.status(400).json({ message: "Validation failed: check name, email, password, and role.", errors: parsed.error.flatten() });
         return;
       }
-      const { name, email, password, role } = parsed.data;
+      const { name, email, recoveryEmail, password, role } = parsed.data;
 
       // Password Complexity Validation
       const passwordErr = validatePassword(password);
@@ -109,6 +110,7 @@ router.post(
             id: existing.id,
             name: existing.name,
             email: existing.email,
+            recoveryEmail: existing.recoveryEmail,
             role: existing.role,
             studentCount: 0,
           });
@@ -120,7 +122,7 @@ router.post(
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
-      const user = await UserModel.create({ name, email: email.toLowerCase(), passwordHash, role });
+      const user = await UserModel.create({ name, email: email.toLowerCase(), recoveryEmail: recoveryEmail.toLowerCase(), passwordHash, role });
 
       // Create Audit Log
       await AuditLogModel.create({
@@ -155,6 +157,7 @@ router.post(
         id: user.id,
         name: user.name,
         email: user.email,
+        recoveryEmail: user.recoveryEmail,
         role: user.role,
         studentCount: 0,
       });
@@ -185,6 +188,7 @@ router.get(
       id: user.id ?? user._id?.toString(),
       name: user.name,
       email: user.email,
+      recoveryEmail: user.recoveryEmail,
       role: user.role,
       studentCount,
     });
@@ -207,7 +211,7 @@ router.put(
         return;
       }
 
-      const parsed = UpdateUserBody.safeParse(req.body);
+      const parsed = UpdateUserBody.partial().safeParse(req.body);
       if (!parsed.success) {
         res.status(400).json({ message: "Validation failed: check fields." });
         return;
@@ -234,6 +238,7 @@ router.put(
       const updateFields: Record<string, unknown> = {};
       if (parsed.data.name !== undefined) updateFields.name = parsed.data.name;
       if (parsed.data.email !== undefined) updateFields.email = parsed.data.email.toLowerCase();
+      if (parsed.data.recoveryEmail !== undefined) updateFields.recoveryEmail = parsed.data.recoveryEmail.toLowerCase();
       
       // Only admins can change roles
       if (parsed.data.role !== undefined && isAdmin) {
@@ -279,6 +284,7 @@ router.put(
         id: updated.id,
         name: updated.name,
         email: updated.email,
+        recoveryEmail: updated.recoveryEmail,
         role: updated.role,
         studentCount,
       });
