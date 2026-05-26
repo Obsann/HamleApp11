@@ -10,6 +10,8 @@ export interface AuthUser {
   name: string;
   email: string;
   role: "admin" | "teacher" | "parent";
+  securityQuestion1?: string | null;
+  securityQuestion2?: string | null;
 }
 
 interface AuthContextValue {

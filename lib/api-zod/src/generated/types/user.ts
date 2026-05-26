@@ -12,4 +12,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  createdAt: Date;
+  securityQuestion1?: string;
+  securityQuestion2?: string;
 }

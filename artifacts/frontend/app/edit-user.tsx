@@ -92,7 +92,7 @@ export default function EditUserScreen() {
         data: {
           name: name.trim(),
           email: email.trim().toLowerCase(),
-          password: password || null,
+          password: password || undefined,
           role,
         },
       },

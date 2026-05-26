@@ -40,13 +40,16 @@ function AuthGate() {
 
   useEffect(() => {
     if (isLoading) return;
-    const isAtLogin = segments[0] === "login";
+    
+    // Screens that unauthenticated users are allowed to see
+    const isPublicScreen = ["welcome", "login", "forgot-password"].includes(segments[0]);
+    
     if (!user) {
-      if (!isAtLogin) {
-        router.replace("/login");
+      if (!isPublicScreen) {
+        router.replace("/welcome");
       }
     } else {
-      if (isAtLogin) {
+      if (isPublicScreen) {
         router.replace("/(tabs)");
       }
     }
@@ -60,8 +63,10 @@ function RootLayoutNav() {
     <>
       <AuthGate />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="forgot-password" options={{ headerShown: true, title: "Forgot Password", headerBackTitle: "Back" }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="student/[id]"
           options={{ headerShown: true, title: "Student Profile", headerBackTitle: "Back" }}

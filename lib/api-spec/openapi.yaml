@@ -109,6 +109,56 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/forgot-password/questions:
+    get:
+      operationId: getSecurityQuestions
+      tags: [auth]
+      summary: Retrieve the two security questions for a given email address
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully retrieved security questions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityQuestionsResponse"
+        "404":
+          description: User not found or no security questions set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [auth]
+      summary: Submit answers to security questions and generate/send a temporary password via email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "200":
+          description: Email sent with temporary password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Invalid email or incorrect security answers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /students:
     get:
       operationId: getStudents
@@ -764,17 +814,50 @@ components:
 
     AuthLoginResponse:
       type: object
+      required:
+        - token
+        - user
       properties:
         token:
           type: string
         user:
           $ref: "#/components/schemas/User"
+
+    SecurityQuestionsResponse:
+      type: object
       required:
-        - token
-        - user
+        - question1
+        - question2
+      properties:
+        question1:
+          type: string
+        question2:
+          type: string
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+        - answer1
+        - answer2
+      properties:
+        email:
+          type: string
+          format: email
+        answer1:
+          type: string
+        answer2:
+          type: string
 
     User:
       type: object
+      required:
+        - id
+        - name
+        - email
+        - recoveryEmail
+        - role
+        - createdAt
       properties:
         id:
           type: string
@@ -782,14 +865,20 @@ components:
           type: string
         email:
           type: string
+          format: email
+        recoveryEmail:
+          type: string
+          format: email
         role:
           type: string
           enum: [admin, teacher, parent]
-      required:
-        - id
-        - name
-        - email
-        - role
+        createdAt:
+          type: string
+          format: date-time
+        securityQuestion1:
+          type: string
+        securityQuestion2:
+          type: string
 
     UserDetail:
       type: object
@@ -800,6 +889,8 @@ components:
           type: string
         email:
           type: string
+        recoveryEmail:
+          type: string
         role:
           type: string
           enum: [admin, teacher, parent]
@@ -809,27 +900,40 @@ components:
         - id
         - name
         - email
+        - recoveryEmail
         - role
         - studentCount
 
     CreateUserRequest:
       type: object
+      required:
+        - name
+        - email
+        - recoveryEmail
+        - password
+        - role
       properties:
         name:
           type: string
         email:
           type: string
           format: email
+        recoveryEmail:
+          type: string
+          format: email
         password:
           type: string
         role:
           type: string
-          enum: [teacher, parent]
-      required:
-        - name
-        - email
-        - password
-        - role
+          enum: [admin, teacher, parent]
+        securityQuestion1:
+          type: string
+        securityAnswer1:
+          type: string
+        securityQuestion2:
+          type: string
+        securityAnswer2:
+          type: string
 
     UpdateUserRequest:
       type: object
@@ -839,15 +943,26 @@ components:
         email:
           type: string
           format: email
+        recoveryEmail:
+          type: string
+          format: email
         password:
           type: string
-          nullable: true
         role:
           type: string
-          enum: [teacher, parent]
+          enum: [admin, teacher, parent]
+        securityQuestion1:
+          type: string
+        securityAnswer1:
+          type: string
+        securityQuestion2:
+          type: string
+        securityAnswer2:
+          type: string
       required:
         - name
         - email
+        - recoveryEmail
         - role
 
     Address:

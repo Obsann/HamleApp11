@@ -10,6 +10,10 @@ import type { UpdateUserRequestRole } from './updateUserRequestRole';
 export interface UpdateUserRequest {
   name: string;
   email: string;
-  password?: string | null;
+  password?: string;
   role: UpdateUserRequestRole;
+  securityQuestion1?: string;
+  securityAnswer1?: string;
+  securityQuestion2?: string;
+  securityAnswer2?: string;
 }

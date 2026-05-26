@@ -31,11 +31,14 @@ import type {
   CreateUserRequest,
   DashboardSummary,
   ErrorResponse,
+  ForgotPasswordRequest,
+  GetSecurityQuestionsParams,
   GetUsersParams,
   HealthStatus,
   LoginRequest,
   MessageResponse,
   Report,
+  SecurityQuestionsResponse,
   Student,
   UpdateAnnouncementRequest,
   UpdateAttendanceRequest,
@@ -352,6 +355,161 @@ export const useChangePassword = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getChangePasswordMutationOptions(options));
+    }
+
+export const getGetSecurityQuestionsUrl = (params: GetSecurityQuestionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/auth/forgot-password/questions?${stringifiedParams}` : `/api/auth/forgot-password/questions`
+}
+
+/**
+ * @summary Retrieve the two security questions for a given email address
+ */
+export const getSecurityQuestions = async (params: GetSecurityQuestionsParams, options?: RequestInit): Promise<SecurityQuestionsResponse> => {
+
+  return customFetch<SecurityQuestionsResponse>(getGetSecurityQuestionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSecurityQuestionsQueryKey = (params?: GetSecurityQuestionsParams,) => {
+    return [
+    `/api/auth/forgot-password/questions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetSecurityQuestionsQueryOptions = <TData = Awaited<ReturnType<typeof getSecurityQuestions>>, TError = ErrorType<ErrorResponse>>(params: GetSecurityQuestionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSecurityQuestions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSecurityQuestionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSecurityQuestions>>> = ({ signal }) => getSecurityQuestions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSecurityQuestions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSecurityQuestionsQueryResult = NonNullable<Awaited<ReturnType<typeof getSecurityQuestions>>>
+export type GetSecurityQuestionsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Retrieve the two security questions for a given email address
+ */
+
+export function useGetSecurityQuestions<TData = Awaited<ReturnType<typeof getSecurityQuestions>>, TError = ErrorType<ErrorResponse>>(
+ params: GetSecurityQuestionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSecurityQuestions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSecurityQuestionsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getForgotPasswordUrl = () => {
+
+
+
+
+  return `/api/auth/forgot-password`
+}
+
+/**
+ * @summary Submit answers to security questions and generate/send a temporary password via email
+ */
+export const forgotPassword = async (forgotPasswordRequest: ForgotPasswordRequest, options?: RequestInit): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getForgotPasswordUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      forgotPasswordRequest,)
+  }
+);}
+
+
+
+
+export const getForgotPasswordMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forgotPassword>>, TError,{data: BodyType<ForgotPasswordRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof forgotPassword>>, TError,{data: BodyType<ForgotPasswordRequest>}, TContext> => {
+
+const mutationKey = ['forgotPassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof forgotPassword>>, {data: BodyType<ForgotPasswordRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  forgotPassword(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ForgotPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof forgotPassword>>>
+    export type ForgotPasswordMutationBody = BodyType<ForgotPasswordRequest>
+    export type ForgotPasswordMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Submit answers to security questions and generate/send a temporary password via email
+ */
+export const useForgotPassword = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forgotPassword>>, TError,{data: BodyType<ForgotPasswordRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof forgotPassword>>,
+        TError,
+        {data: BodyType<ForgotPasswordRequest>},
+        TContext
+      > => {
+      return useMutation(getForgotPasswordMutationOptions(options));
     }
 
 export const getGetStudentsUrl = () => {

@@ -16,7 +16,7 @@ import * as Haptics from "expo-haptics";
 
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
-import { useChangePassword } from "@workspace/api-client-react";
+import { useChangePassword, useUpdateUser } from "@workspace/api-client-react";
 
 export default function ProfileScreen() {
   const colors = useColors();
@@ -25,11 +25,19 @@ export default function ProfileScreen() {
   const systemScheme = useColorScheme();
 
   const { mutate: changePassword, isPending } = useChangePassword();
+  const { mutate: updateUser, isPending: isUpdatingProfile } = useUpdateUser();
 
   // Form State
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Profile Update State
+  const [email, setEmail] = useState(user?.email || "");
+  const [question1, setQuestion1] = useState(user?.securityQuestion1 || "");
+  const [answer1, setAnswer1] = useState("");
+  const [question2, setQuestion2] = useState(user?.securityQuestion2 || "");
+  const [answer2, setAnswer2] = useState("");
 
   const roleLabel =
     user?.role === "admin"
@@ -99,6 +107,53 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleUpdateProfile = () => {
+    if (!user?.id) return;
+
+    if (!email.trim() || !email.includes("@")) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+
+    // Prepare update payload
+    const payload: any = {
+      email: email.trim()
+    };
+
+    // If they want to update questions, they must provide all fields
+    const isUpdatingQuestions = question1.trim() || answer1.trim() || question2.trim() || answer2.trim();
+    if (isUpdatingQuestions) {
+      if (!question1.trim() || !answer1.trim() || !question2.trim() || !answer2.trim()) {
+        Alert.alert("Missing Fields", "To update security questions, you must provide BOTH questions and BOTH answers.");
+        return;
+      }
+      payload.securityQuestion1 = question1.trim();
+      payload.securityAnswer1 = answer1.trim();
+      payload.securityQuestion2 = question2.trim();
+      payload.securityAnswer2 = answer2.trim();
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    updateUser(
+      { id: user.id, data: payload },
+      {
+        onSuccess: () => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          Alert.alert("Success", "Profile updated successfully! If you changed your email, you will need to use it for your next login.");
+          if (isUpdatingQuestions) {
+            setAnswer1("");
+            setAnswer2("");
+          }
+        },
+        onError: (err: any) => {
+          const msg = err?.response?.data?.message ?? "Failed to update profile.";
+          Alert.alert("Error", msg);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      }
+    );
+  };
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -130,6 +185,70 @@ export default function ProfileScreen() {
             {systemScheme === "dark" ? "Dark Mode" : "Light Mode"} (System)
           </Text>
         </View>
+      </View>
+
+      {/* Security Info Form */}
+      <Text style={styles.sectionTitle}>Security Settings</Text>
+      <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        
+        <Text style={[styles.inputLabel, { color: colors.foreground }]}>Email Address (For Login & Recovery)</Text>
+        <TextInput
+          style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="your@email.com"
+          placeholderTextColor={colors.mutedForeground}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 16 }} />
+
+        <Text style={[styles.inputLabel, { color: colors.foreground }]}>Security Question 1</Text>
+        <TextInput
+          style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
+          value={question1}
+          onChangeText={setQuestion1}
+          placeholder="e.g. What is your mother's maiden name?"
+          placeholderTextColor={colors.mutedForeground}
+        />
+        <Text style={[styles.inputLabel, { color: colors.foreground }]}>Answer 1</Text>
+        <TextInput
+          style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
+          value={answer1}
+          onChangeText={setAnswer1}
+          placeholder="New Answer (leaves unchanged if blank)"
+          placeholderTextColor={colors.mutedForeground}
+        />
+
+        <Text style={[styles.inputLabel, { color: colors.foreground }]}>Security Question 2</Text>
+        <TextInput
+          style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
+          value={question2}
+          onChangeText={setQuestion2}
+          placeholder="e.g. What city were you born in?"
+          placeholderTextColor={colors.mutedForeground}
+        />
+        <Text style={[styles.inputLabel, { color: colors.foreground }]}>Answer 2</Text>
+        <TextInput
+          style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
+          value={answer2}
+          onChangeText={setAnswer2}
+          placeholder="New Answer (leaves unchanged if blank)"
+          placeholderTextColor={colors.mutedForeground}
+        />
+
+        <TouchableOpacity
+          style={[styles.saveBtn, { backgroundColor: isUpdatingProfile ? colors.mutedForeground : colors.primary }]}
+          onPress={handleUpdateProfile}
+          disabled={isUpdatingProfile}
+        >
+          {isUpdatingProfile ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveBtnText}>Save Security Settings</Text>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Password Change Form */}

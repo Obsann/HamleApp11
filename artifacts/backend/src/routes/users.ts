@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { requireAuth, requireRole } from "../middlewares/auth";
 import { CreateUserBody, UpdateUserBody } from "@workspace/api-zod";
 import { validatePassword } from "./auth";
+import { sendMail } from "../utils/mailer";
 
 const router: IRouter = Router();
 
@@ -131,6 +132,25 @@ router.post(
         details: `Created new ${role} user ${name} (${email.toLowerCase()})`,
       });
 
+      // Send welcome email with credentials
+      try {
+        await sendMail({
+          to: user.email,
+          subject: "Welcome to Hamle SIS",
+          text: `Hello ${user.name},\n\nAn account has been created for you on the Hamle Student Information System.\n\nYour username: ${user.email}\nYour password: ${password}\n\nPlease log in and change your password, and set up your security questions in your Profile tab.\n\nThank you,\nHamle Elementary School`,
+          html: `<p>Hello <strong>${user.name}</strong>,</p>
+                 <p>An account has been created for you on the Hamle Student Information System.</p>
+                 <p>Your username: <strong>${user.email}</strong></p>
+                 <p>Your password: <strong>${password}</strong></p>
+                 <p>Please log in and change your password, and set up your security questions in your Profile tab.</p>
+                 <br/>
+                 <p>Thank you,<br/>Hamle Elementary School</p>`
+        });
+      } catch (mailErr) {
+        console.error("Failed to send welcome email to new user:", mailErr);
+        // We don't fail the request since the user was created successfully
+      }
+
       res.status(201).json({
         id: user.id,
         name: user.name,
@@ -171,17 +191,25 @@ router.get(
   }
 );
 
-// PUT /users/:id - Update user (Admin only)
+// PUT /users/:id - Update user (Admin or Self)
 router.put(
   "/users/:id",
   requireAuth,
-  requireRole("admin"),
   async (req, res): Promise<void> => {
     try {
       const rawId = Array.isArray(req.params["id"]) ? req.params["id"][0] : req.params["id"];
+      
+      // Access control: only admins or the user themselves can update
+      const isAdmin = req.user!.role === "admin";
+      const isSelf = req.user!.userId === rawId;
+      if (!isAdmin && !isSelf) {
+        res.status(403).json({ message: "You don't have permission to modify this user." });
+        return;
+      }
+
       const parsed = UpdateUserBody.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({ message: "Validation failed: check name, email, and role." });
+        res.status(400).json({ message: "Validation failed: check fields." });
         return;
       }
 
@@ -191,21 +219,32 @@ router.put(
         return;
       }
 
-      const emailConflict = await UserModel.findOne({
-        email: parsed.data.email.toLowerCase(),
-        _id: { $ne: rawId },
-        deletedAt: null
-      });
-      if (emailConflict) {
-        res.status(409).json({ message: "Email already in use by another user." });
-        return;
+      if (parsed.data.email) {
+        const emailConflict = await UserModel.findOne({
+          email: parsed.data.email.toLowerCase(),
+          _id: { $ne: rawId },
+          deletedAt: null
+        });
+        if (emailConflict) {
+          res.status(409).json({ message: "Email already in use by another user." });
+          return;
+        }
       }
 
-      const updateFields: Record<string, unknown> = {
-        name: parsed.data.name,
-        email: parsed.data.email.toLowerCase(),
-        role: parsed.data.role,
-      };
+      const updateFields: Record<string, unknown> = {};
+      if (parsed.data.name !== undefined) updateFields.name = parsed.data.name;
+      if (parsed.data.email !== undefined) updateFields.email = parsed.data.email.toLowerCase();
+      
+      // Only admins can change roles
+      if (parsed.data.role !== undefined && isAdmin) {
+        updateFields.role = parsed.data.role;
+      }
+
+      // Security Questions
+      if (parsed.data.securityQuestion1 !== undefined) updateFields.securityQuestion1 = parsed.data.securityQuestion1;
+      if (parsed.data.securityAnswer1 !== undefined) updateFields.securityAnswer1 = parsed.data.securityAnswer1;
+      if (parsed.data.securityQuestion2 !== undefined) updateFields.securityQuestion2 = parsed.data.securityQuestion2;
+      if (parsed.data.securityAnswer2 !== undefined) updateFields.securityAnswer2 = parsed.data.securityAnswer2;
 
       if (parsed.data.password) {
         const passwordErr = validatePassword(parsed.data.password);

@@ -29,8 +29,11 @@ export const LoginResponse = zod.object({
   "user": zod.object({
   "id": zod.string(),
   "name": zod.string(),
-  "email": zod.string(),
-  "role": zod.enum(['admin', 'teacher', 'parent'])
+  "email": zod.string().email(),
+  "role": zod.enum(['admin', 'teacher', 'parent']),
+  "createdAt": zod.coerce.date(),
+  "securityQuestion1": zod.string().optional(),
+  "securityQuestion2": zod.string().optional()
 })
 })
 
@@ -41,8 +44,11 @@ export const LoginResponse = zod.object({
 export const GetMeResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
-  "email": zod.string(),
-  "role": zod.enum(['admin', 'teacher', 'parent'])
+  "email": zod.string().email(),
+  "role": zod.enum(['admin', 'teacher', 'parent']),
+  "createdAt": zod.coerce.date(),
+  "securityQuestion1": zod.string().optional(),
+  "securityQuestion2": zod.string().optional()
 })
 
 
@@ -55,6 +61,33 @@ export const ChangePasswordBody = zod.object({
 })
 
 export const ChangePasswordResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Retrieve the two security questions for a given email address
+ */
+export const GetSecurityQuestionsQueryParams = zod.object({
+  "email": zod.coerce.string()
+})
+
+export const GetSecurityQuestionsResponse = zod.object({
+  "question1": zod.string(),
+  "question2": zod.string()
+})
+
+
+/**
+ * @summary Submit answers to security questions and generate/send a temporary password via email
+ */
+export const ForgotPasswordBody = zod.object({
+  "email": zod.string().email(),
+  "answer1": zod.string(),
+  "answer2": zod.string()
+})
+
+export const ForgotPasswordResponse = zod.object({
   "message": zod.string()
 })
 
@@ -499,7 +532,11 @@ export const CreateUserBody = zod.object({
   "name": zod.string(),
   "email": zod.string().email(),
   "password": zod.string(),
-  "role": zod.enum(['teacher', 'parent'])
+  "role": zod.enum(['admin', 'teacher', 'parent']),
+  "securityQuestion1": zod.string().optional(),
+  "securityAnswer1": zod.string().optional(),
+  "securityQuestion2": zod.string().optional(),
+  "securityAnswer2": zod.string().optional()
 })
 
 
@@ -529,8 +566,12 @@ export const UpdateUserParams = zod.object({
 export const UpdateUserBody = zod.object({
   "name": zod.string(),
   "email": zod.string().email(),
-  "password": zod.string().nullish(),
-  "role": zod.enum(['teacher', 'parent'])
+  "password": zod.string().optional(),
+  "role": zod.enum(['admin', 'teacher', 'parent']),
+  "securityQuestion1": zod.string().optional(),
+  "securityAnswer1": zod.string().optional(),
+  "securityQuestion2": zod.string().optional(),
+  "securityAnswer2": zod.string().optional()
 })
 
 export const UpdateUserResponse = zod.object({

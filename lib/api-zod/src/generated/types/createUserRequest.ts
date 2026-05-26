@@ -12,4 +12,8 @@ export interface CreateUserRequest {
   email: string;
   password: string;
   role: CreateUserRequestRole;
+  securityQuestion1?: string;
+  securityAnswer1?: string;
+  securityQuestion2?: string;
+  securityAnswer2?: string;
 }

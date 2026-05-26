@@ -10,6 +10,7 @@ export type UpdateUserRequestRole = typeof UpdateUserRequestRole[keyof typeof Up
 
 
 export const UpdateUserRequestRole = {
+  admin: 'admin',
   teacher: 'teacher',
   parent: 'parent',
 } as const;

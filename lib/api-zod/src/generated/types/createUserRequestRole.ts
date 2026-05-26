@@ -10,6 +10,7 @@ export type CreateUserRequestRole = typeof CreateUserRequestRole[keyof typeof Cr
 
 
 export const CreateUserRequestRole = {
+  admin: 'admin',
   teacher: 'teacher',
   parent: 'parent',
 } as const;

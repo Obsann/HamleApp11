@@ -41,11 +41,25 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  createdAt: string;
+  securityQuestion1?: string;
+  securityQuestion2?: string;
 }
 
 export interface AuthLoginResponse {
   token: string;
   user: User;
+}
+
+export interface SecurityQuestionsResponse {
+  question1: string;
+  question2: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+  answer1: string;
+  answer2: string;
 }
 
 export type UserDetailRole = typeof UserDetailRole[keyof typeof UserDetailRole];
@@ -69,6 +83,7 @@ export type CreateUserRequestRole = typeof CreateUserRequestRole[keyof typeof Cr
 
 
 export const CreateUserRequestRole = {
+  admin: 'admin',
   teacher: 'teacher',
   parent: 'parent',
 } as const;
@@ -78,12 +93,17 @@ export interface CreateUserRequest {
   email: string;
   password: string;
   role: CreateUserRequestRole;
+  securityQuestion1?: string;
+  securityAnswer1?: string;
+  securityQuestion2?: string;
+  securityAnswer2?: string;
 }
 
 export type UpdateUserRequestRole = typeof UpdateUserRequestRole[keyof typeof UpdateUserRequestRole];
 
 
 export const UpdateUserRequestRole = {
+  admin: 'admin',
   teacher: 'teacher',
   parent: 'parent',
 } as const;
@@ -91,8 +111,12 @@ export const UpdateUserRequestRole = {
 export interface UpdateUserRequest {
   name: string;
   email: string;
-  password?: string | null;
+  password?: string;
   role: UpdateUserRequestRole;
+  securityQuestion1?: string;
+  securityAnswer1?: string;
+  securityQuestion2?: string;
+  securityAnswer2?: string;
 }
 
 export interface Address {
@@ -416,6 +440,10 @@ export interface UpdateAnnouncementRequest {
   content?: string;
   targetRole?: UpdateAnnouncementRequestTargetRole;
 }
+
+export type GetSecurityQuestionsParams = {
+email: string;
+};
 
 export type GetUsersParams = {
 role?: GetUsersRole;
