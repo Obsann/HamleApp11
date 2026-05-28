@@ -3,11 +3,9 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   ScrollView,
   ActivityIndicator,
   Platform,
-  Alert,
   StyleSheet,
   Modal,
   FlatList,
@@ -17,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useQueryClient } from "@tanstack/react-query";
+import Toast from "react-native-toast-message";
 
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
@@ -27,6 +26,7 @@ import {
   getGetStudentsQueryKey,
   getGetStudentQueryKey,
 } from "@workspace/api-client-react";
+import AnimatedTouchable from "@/components/AnimatedTouchable";
 
 const GRADES = [
   "Grade 1", "Grade 2", "Grade 3", "Grade 4",
@@ -155,19 +155,35 @@ export default function EditStudentScreen() {
 
   const handleSave = () => {
     if (!firstName.trim() || !lastName.trim() || !grade || !dateOfBirth.trim()) {
-      Alert.alert("Missing Fields", "First name, last name, grade, and date of birth are required.");
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "First name, last name, grade, and DOB are required.",
+      });
       return;
     }
     if (!NAME_REGEX.test(firstName.trim())) {
-      Alert.alert("Invalid Name", "First name must contain only letters (no numbers or special characters).");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Name",
+        text2: "First name must contain only letters.",
+      });
       return;
     }
     if (!NAME_REGEX.test(lastName.trim())) {
-      Alert.alert("Invalid Name", "Last name must contain only letters (no numbers or special characters).");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Name",
+        text2: "Last name must contain only letters.",
+      });
       return;
     }
     if (!isValidDate(dateOfBirth.trim())) {
-      Alert.alert("Invalid Date", "Date of birth must be a valid date in YYYY-MM-DD format.");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Date",
+        text2: "Date of birth must be a valid date in YYYY-MM-DD format.",
+      });
       return;
     }
     // Ensure the child is between 3 and 18 years old
@@ -176,16 +192,28 @@ export default function EditStudentScreen() {
     const ageDiffMs = today.getTime() - dob.getTime();
     const ageYears = ageDiffMs / (365.25 * 24 * 60 * 60 * 1000);
     if (ageYears < 3 || ageYears > 18) {
-      Alert.alert("Invalid Age", "Student must be between 3 and 18 years old.");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Age",
+        text2: "Student must be between 3 and 18 years old.",
+      });
       return;
     }
     if (faydaId.trim() && (faydaId.trim().length !== 12 || !/^\d{12}$/.test(faydaId.trim()))) {
-      Alert.alert("Invalid Fayda ID", "Fayda ID must be exactly 12 digits (numbers only).");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Fayda ID",
+        text2: "Fayda ID must be exactly 12 digits.",
+      });
       return;
     }
     // Validate emergency contact phone if provided
     if (emergencyContactPhone.trim() && !PHONE_REGEX.test(emergencyContactPhone.trim())) {
-      Alert.alert("Invalid Phone Number", "Phone must be in format: +2519XXXXXXXX, +2517XXXXXXXX, 09XXXXXXXX, or 07XXXXXXXX.");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Phone Number",
+        text2: "Enter a valid Ethiopian phone number.",
+      });
       return;
     }
 
@@ -226,11 +254,20 @@ export default function EditStudentScreen() {
           await queryClient.invalidateQueries({ queryKey: getGetStudentsQueryKey() });
           await queryClient.invalidateQueries({ queryKey: getGetStudentQueryKey(id!) });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          Toast.show({
+            type: "success",
+            text1: "Student Updated",
+            text2: `${firstName} ${lastName}'s profile has been updated.`,
+          });
           router.back();
         },
         onError: (err: any) => {
-          const msg = err?.response?.data?.message ?? "Failed to update student profile.";
-          Alert.alert("Error", msg);
+          const msg = err?.data?.message ?? err?.message ?? "Failed to update student profile.";
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: msg,
+          });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         },
       }
@@ -283,9 +320,9 @@ export default function EditStudentScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 24, gap: 12 }}>
-          <TouchableOpacity onPress={() => router.back()} style={{ padding: 4 }}>
+          <AnimatedTouchable onPress={() => router.back()} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
-          </TouchableOpacity>
+          </AnimatedTouchable>
           <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: colors.foreground }}>Edit Student</Text>
         </View>
 
@@ -332,7 +369,7 @@ export default function EditStudentScreen() {
         <Text style={styles.label}>Gender</Text>
         <View style={{ flexDirection: "row", gap: 12, marginBottom: 20 }}>
           {(["male", "female"] as const).map((g) => (
-            <TouchableOpacity
+            <AnimatedTouchable
               key={g}
               onPress={() => setGender(g)}
               style={[
@@ -349,18 +386,19 @@ export default function EditStudentScreen() {
                   fontFamily: "Inter_600SemiBold",
                   color: gender === g ? colors.primary : colors.mutedForeground,
                   textTransform: "capitalize",
+                  textAlign: "center",
                 }}
               >
                 {g}
               </Text>
-            </TouchableOpacity>
+            </AnimatedTouchable>
           ))}
         </View>
 
         <Text style={styles.label}>Grade *</Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
           {GRADES.map((g) => (
-            <TouchableOpacity
+            <AnimatedTouchable
               key={g}
               style={[
                 styles.gradeBadge,
@@ -376,49 +414,56 @@ export default function EditStudentScreen() {
                   fontSize: 13,
                   fontFamily: "Inter_600SemiBold",
                   color: grade === g ? "#fff" : colors.foreground,
+                  textAlign: "center",
                 }}
               >
                 {g}
               </Text>
-            </TouchableOpacity>
+            </AnimatedTouchable>
           ))}
         </View>
 
         <Text style={styles.label}>Enrollment Status</Text>
-        <TouchableOpacity
+        <AnimatedTouchable
           style={[styles.selector, { borderColor: colors.border, backgroundColor: colors.card }]}
           onPress={() => setPickerType("status")}
         >
-          <Text style={{ fontSize: 15, fontFamily: "Inter_500Medium", color: colors.foreground }}>
-            {getSelectedLabel("status")}
-          </Text>
-          <Feather name="chevron-down" size={18} color={colors.mutedForeground} />
-        </TouchableOpacity>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <Text style={{ fontSize: 15, fontFamily: "Inter_500Medium", color: colors.foreground }}>
+              {getSelectedLabel("status")}
+            </Text>
+            <Feather name="chevron-down" size={18} color={colors.mutedForeground} />
+          </View>
+        </AnimatedTouchable>
 
         {/* Roles & Dropdowns section */}
         {isAdmin ? (
           <>
             <Text style={styles.label}>Parent / Guardian (Admin Only)</Text>
-            <TouchableOpacity
+            <AnimatedTouchable
               style={[styles.selector, { borderColor: colors.border, backgroundColor: colors.card }]}
               onPress={() => setPickerType("parent")}
             >
-              <Text style={{ fontSize: 15, fontFamily: "Inter_500Medium", color: colors.foreground }}>
-                {getSelectedLabel("parent")}
-              </Text>
-              <Feather name="chevron-down" size={18} color={colors.mutedForeground} />
-            </TouchableOpacity>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <Text style={{ fontSize: 15, fontFamily: "Inter_500Medium", color: colors.foreground }}>
+                  {getSelectedLabel("parent")}
+                </Text>
+                <Feather name="chevron-down" size={18} color={colors.mutedForeground} />
+              </View>
+            </AnimatedTouchable>
 
             <Text style={styles.label}>Assigned Teacher (Admin Only)</Text>
-            <TouchableOpacity
+            <AnimatedTouchable
               style={[styles.selector, { borderColor: colors.border, backgroundColor: colors.card }]}
               onPress={() => setPickerType("teacher")}
             >
-              <Text style={{ fontSize: 15, fontFamily: "Inter_500Medium", color: colors.foreground }}>
-                {getSelectedLabel("teacher")}
-              </Text>
-              <Feather name="chevron-down" size={18} color={colors.mutedForeground} />
-            </TouchableOpacity>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <Text style={{ fontSize: 15, fontFamily: "Inter_500Medium", color: colors.foreground }}>
+                  {getSelectedLabel("teacher")}
+                </Text>
+                <Feather name="chevron-down" size={18} color={colors.mutedForeground} />
+              </View>
+            </AnimatedTouchable>
           </>
         ) : (
           <>
@@ -530,7 +575,7 @@ export default function EditStudentScreen() {
           maxLength={13}
         />
 
-        <TouchableOpacity
+        <AnimatedTouchable
           style={[
             styles.submitBtn,
             { backgroundColor: isPending ? colors.mutedForeground : colors.primary },
@@ -541,9 +586,9 @@ export default function EditStudentScreen() {
           {isPending ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff" }}>Save Changes</Text>
+            <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff", textAlign: "center" }}>Save Changes</Text>
           )}
-        </TouchableOpacity>
+        </AnimatedTouchable>
       </ScrollView>
 
       {/* Custom Picker Modal for Parents / Teachers / Enrollment Status */}
@@ -563,9 +608,9 @@ export default function EditStudentScreen() {
                   ? "Select Parent"
                   : "Select Teacher"}
               </Text>
-              <TouchableOpacity onPress={() => { setPickerType(null); setPickerSearch(""); }}>
+              <AnimatedTouchable onPress={() => { setPickerType(null); setPickerSearch(""); }} style={{ padding: 4 }}>
                 <Feather name="x" size={24} color={colors.foreground} />
-              </TouchableOpacity>
+              </AnimatedTouchable>
             </View>
 
             {pickerType !== "status" && (
@@ -594,7 +639,7 @@ export default function EditStudentScreen() {
                     : (item as any).id === teacherId || ((item as any).id === "none" && !teacherId);
 
                 return (
-                  <TouchableOpacity
+                  <AnimatedTouchable
                     style={[
                       styles.pickerItem,
                       {
@@ -631,7 +676,7 @@ export default function EditStudentScreen() {
                       )}
                     </View>
                     {isSelected && <Feather name="check" size={18} color={colors.primary} />}
-                  </TouchableOpacity>
+                  </AnimatedTouchable>
                 );
               }}
             />

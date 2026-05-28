@@ -3,20 +3,20 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   ScrollView,
   ActivityIndicator,
   Platform,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useQueryClient } from "@tanstack/react-query";
+import Toast from "react-native-toast-message";
 
 import { useColors } from "@/hooks/useColors";
 import { useGetStudents, useCreateAttendance, getGetAttendanceQueryKey, getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
+import AnimatedTouchable from "@/components/AnimatedTouchable";
 
 const STATUSES = [
   { key: "present" as const, label: "Present", icon: "check-circle" as const, color: "#16A34A", bg: "#DCFCE7" },
@@ -42,11 +42,20 @@ export default function AddAttendanceScreen() {
         queryClient.invalidateQueries({ queryKey: getGetAttendanceQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Toast.show({
+          type: "success",
+          text1: "Attendance Recorded",
+          text2: "The attendance record has been saved successfully.",
+        });
         router.back();
       },
       onError: (err: any) => {
-        const msg = err?.response?.data?.message ?? err?.message ?? "Failed to record attendance. Please try again.";
-        Alert.alert("Error", msg);
+        const msg = err?.data?.message ?? err?.message ?? "Failed to record attendance. Please try again.";
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: msg,
+        });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       },
     },
@@ -54,11 +63,19 @@ export default function AddAttendanceScreen() {
 
   const handleSubmit = () => {
     if (!studentId) {
-      Alert.alert("Missing Fields", "Please select a student.");
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Please select a student.",
+      });
       return;
     }
     if (!date.trim()) {
-      Alert.alert("Missing Fields", "Please enter a date.");
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Please enter a date.",
+      });
       return;
     }
     // Validate date is a real calendar date
@@ -69,12 +86,20 @@ export default function AddAttendanceScreen() {
       return dt.getFullYear() === y && dt.getMonth() === m! - 1 && dt.getDate() === d;
     };
     if (!isValidDate(date.trim())) {
-      Alert.alert("Invalid Date", "Date must be a valid date in YYYY-MM-DD format.");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Date",
+        text2: "Date must be a valid date in YYYY-MM-DD format.",
+      });
       return;
     }
     // Prevent future dates
     if (new Date(date.trim()) > new Date()) {
-      Alert.alert("Invalid Date", "Attendance date cannot be in the future.");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Date",
+        text2: "Attendance date cannot be in the future.",
+      });
       return;
     }
     recordAttendance({
@@ -91,9 +116,9 @@ export default function AddAttendanceScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 24, gap: 12 }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 4 }}>
+        <AnimatedTouchable onPress={() => router.back()} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
-        </TouchableOpacity>
+        </AnimatedTouchable>
         <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: colors.foreground }}>Record Attendance</Text>
       </View>
 
@@ -103,7 +128,7 @@ export default function AddAttendanceScreen() {
           <Text style={{ padding: 14, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>No students available</Text>
         ) : (
           students.map((s, i) => (
-            <TouchableOpacity
+            <AnimatedTouchable
               key={s.id}
               style={{
                 flexDirection: "row", justifyContent: "space-between", alignItems: "center",
@@ -123,7 +148,7 @@ export default function AddAttendanceScreen() {
                 </Text>
               </View>
               {studentId === s.id && <Feather name="check-circle" size={18} color={colors.primary} />}
-            </TouchableOpacity>
+            </AnimatedTouchable>
           ))
         )}
       </View>
@@ -131,7 +156,7 @@ export default function AddAttendanceScreen() {
       <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Status *</Text>
       <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
         {STATUSES.map((s) => (
-          <TouchableOpacity
+          <AnimatedTouchable
             key={s.key}
             style={{
               flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: "center", gap: 6,
@@ -144,7 +169,7 @@ export default function AddAttendanceScreen() {
             <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: status === s.key ? s.color : colors.mutedForeground }}>
               {s.label}
             </Text>
-          </TouchableOpacity>
+          </AnimatedTouchable>
         ))}
       </View>
 
@@ -168,17 +193,17 @@ export default function AddAttendanceScreen() {
         numberOfLines={3}
       />
 
-      <TouchableOpacity
-        style={{ height: 54, backgroundColor: "#16A34A", borderRadius: 14, alignItems: "center", justifyContent: "center", opacity: isPending ? 0.6 : 1 }}
+      <AnimatedTouchable
+        style={{ height: 54, backgroundColor: isPending ? colors.mutedForeground : colors.primary, borderRadius: 14, alignItems: "center", justifyContent: "center" }}
         onPress={handleSubmit}
         disabled={isPending}
       >
         {isPending ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: "#fff" }}>Record Attendance</Text>
+          <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: "#fff", textAlign: "center" }}>Record Attendance</Text>
         )}
-      </TouchableOpacity>
+      </AnimatedTouchable>
     </ScrollView>
   );
 }

@@ -7,13 +7,13 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useQueryClient } from "@tanstack/react-query";
+import Toast from "react-native-toast-message";
 
 import { useColors } from "@/hooks/useColors";
 import { useGetStudents, useCreateReport, getGetReportsQueryKey } from "@workspace/api-client-react";
@@ -47,11 +47,12 @@ export default function AddReportScreen() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetReportsQueryKey() });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Toast.show({ type: "success", text1: "Report Created", text2: "The report has been saved." });
         router.back();
       },
       onError: (err: any) => {
-        const msg = err?.response?.data?.message ?? err?.message ?? "Failed to create report. Please try again.";
-        Alert.alert("Error", msg);
+        const msg = err?.data?.message ?? err?.message ?? "Failed to create report. Please try again.";
+        Toast.show({ type: "error", text1: "Error", text2: msg });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       },
     },
@@ -71,28 +72,28 @@ export default function AddReportScreen() {
 
   const handleSubmit = () => {
     if (!studentId) {
-      Alert.alert("Missing Fields", "Please select a student.");
+      Toast.show({ type: "error", text1: "Missing Fields", text2: "Please select a student." });
       return;
     }
     if (!subject.trim()) {
-      Alert.alert("Missing Fields", "Please enter a subject.");
+      Toast.show({ type: "error", text1: "Missing Fields", text2: "Please enter a subject." });
       return;
     }
     if (!SUBJECT_REGEX.test(subject.trim())) {
-      Alert.alert("Invalid Subject", "Subject name must contain only letters (no numbers).");
+      Toast.show({ type: "error", text1: "Invalid Subject", text2: "Subject must contain only letters." });
       return;
     }
     if (!date) {
-      Alert.alert("Missing Fields", "Please set the date.");
+      Toast.show({ type: "error", text1: "Missing Fields", text2: "Please set the date." });
       return;
     }
     if (!isValidDate(date.trim())) {
-      Alert.alert("Invalid Date", "Date must be a valid date in YYYY-MM-DD format.");
+      Toast.show({ type: "error", text1: "Invalid Date", text2: "Date must be in YYYY-MM-DD format." });
       return;
     }
     const scoreNum = score.trim() ? Number(score.trim()) : undefined;
     if (scoreNum !== undefined && (isNaN(scoreNum) || scoreNum < 0 || scoreNum > 100)) {
-      Alert.alert("Invalid Score", "Score must be a number between 0 and 100.");
+      Toast.show({ type: "error", text1: "Invalid Score", text2: "Score must be between 0 and 100." });
       return;
     }
 
@@ -103,25 +104,25 @@ export default function AddReportScreen() {
 
     if (type === "grade") {
       if (isNaN(midVal) || midVal < 0 || midVal > 100) {
-        Alert.alert("Invalid Score", "Mid Exam must be a number between 0 and 100.");
+        Toast.show({ type: "error", text1: "Invalid Score", text2: "Mid Exam must be between 0 and 100." });
         return;
       }
       if (isNaN(testVal) || testVal < 0 || testVal > 100) {
-        Alert.alert("Invalid Score", "Tests must be a number between 0 and 100.");
+        Toast.show({ type: "error", text1: "Invalid Score", text2: "Tests must be between 0 and 100." });
         return;
       }
       if (isNaN(caVal) || caVal < 0 || caVal > 100) {
-        Alert.alert("Invalid Score", "Continuous Assessment must be a number between 0 and 100.");
+        Toast.show({ type: "error", text1: "Invalid Score", text2: "Continuous Assessment must be between 0 and 100." });
         return;
       }
       if (isNaN(finalVal) || finalVal < 0 || finalVal > 100) {
-        Alert.alert("Invalid Score", "Final Exam must be a number between 0 and 100.");
+        Toast.show({ type: "error", text1: "Invalid Score", text2: "Final Exam must be between 0 and 100." });
         return;
       }
       // Total of all sub-scores must not exceed 100
       const total = midVal + testVal + caVal + finalVal;
       if (total > 100) {
-        Alert.alert("Invalid Total", `The total of all sub-scores (${total}) exceeds 100. Please adjust the scores.`);
+        Toast.show({ type: "error", text1: "Invalid Total", text2: `Sub-scores total (${total}) exceeds 100.` });
         return;
       }
     }

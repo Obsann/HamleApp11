@@ -4,8 +4,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
   Platform,
   RefreshControl,
 } from "react-native";
@@ -17,6 +15,8 @@ import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
 import { useGetDashboardSummary } from "@workspace/api-client-react";
+import AnimatedTouchable from "@/components/AnimatedTouchable";
+import { Skeleton } from "@/components/SkeletonLoader";
 
 interface StatCardProps {
   label: string;
@@ -70,6 +70,34 @@ const statStyles = StyleSheet.create({
   },
 });
 
+function DashboardSkeleton() {
+  return (
+    <View style={{ marginTop: 24 }}>
+      <Skeleton width={150} height={20} style={{ marginBottom: 14 }} />
+      <View style={{ flexDirection: "row", marginBottom: 12 }}>
+        <Skeleton width="48%" height={120} borderRadius={16} />
+        <View style={{ width: "4%" }} />
+        <Skeleton width="48%" height={120} borderRadius={16} />
+      </View>
+      <View style={{ flexDirection: "row", marginBottom: 24 }}>
+        <Skeleton width="48%" height={120} borderRadius={16} />
+        <View style={{ width: "4%" }} />
+        <Skeleton width="48%" height={120} borderRadius={16} />
+      </View>
+      
+      <Skeleton width="100%" height={100} borderRadius={16} style={{ marginBottom: 24 }} />
+      
+      <Skeleton width={150} height={20} style={{ marginBottom: 14 }} />
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+        <Skeleton width="48%" height={110} borderRadius={16} />
+        <Skeleton width="48%" height={110} borderRadius={16} />
+        <Skeleton width="48%" height={110} borderRadius={16} />
+        <Skeleton width="48%" height={110} borderRadius={16} />
+      </View>
+    </View>
+  );
+}
+
 export default function DashboardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -96,12 +124,13 @@ export default function DashboardScreen() {
           <Text style={styles.greeting}>Welcome back,</Text>
           <Text style={styles.userName}>{user?.name?.split(" ")[0]}</Text>
         </View>
-        <TouchableOpacity
+        <AnimatedTouchable
           style={styles.logoutBtn}
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); logout(); }}
+          onPress={() => { logout(); }}
+          activeScale={0.9}
         >
           <Feather name="log-out" size={20} color={colors.mutedForeground} />
-        </TouchableOpacity>
+        </AnimatedTouchable>
       </View>
 
       <View style={styles.roleBadge}>
@@ -110,13 +139,13 @@ export default function DashboardScreen() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+        <DashboardSkeleton />
       ) : (
         <>
           <Text style={styles.sectionTitle}>Today at a Glance</Text>
           <View style={styles.statsRow}>
             <StatCard
-              label="Students"
+              label={user?.role === "parent" ? "My Children" : "Students"}
               value={summary?.totalStudents ?? 0}
               icon="users"
               color="#1B3D7A"
@@ -166,64 +195,63 @@ export default function DashboardScreen() {
 
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsGrid}>
-            <TouchableOpacity
+            <AnimatedTouchable
               style={styles.actionBtn}
               onPress={() => router.push("/(tabs)/students")}
-              activeOpacity={0.85}
             >
               <View style={[styles.actionIconWrap, { backgroundColor: colors.primary + "15" }]}>
                 <Feather name="users" size={22} color={colors.primary} />
               </View>
-              <Text style={styles.actionBtnText}>View Students</Text>
-            </TouchableOpacity>
+              <Text style={styles.actionBtnText}>
+                {user?.role === "parent" ? "My Children" : "View Students"}
+              </Text>
+            </AnimatedTouchable>
             
-            <TouchableOpacity
+            <AnimatedTouchable
               style={styles.actionBtn}
               onPress={() => router.push("/(tabs)/reports")}
-              activeOpacity={0.85}
             >
               <View style={[styles.actionIconWrap, { backgroundColor: colors.primary + "15" }]}>
                 <Feather name="file-text" size={22} color={colors.primary} />
               </View>
-              <Text style={styles.actionBtnText}>View Reports</Text>
-            </TouchableOpacity>
+              <Text style={styles.actionBtnText}>
+                {user?.role === "parent" ? "Report Cards" : "View Reports"}
+              </Text>
+            </AnimatedTouchable>
             
             {(user?.role === "admin" || user?.role === "teacher") && (
               <>
-                <TouchableOpacity
+                <AnimatedTouchable
                   style={styles.actionBtn}
                   onPress={() => router.push("/add-attendance")}
-                  activeOpacity={0.85}
                 >
                   <View style={[styles.actionIconWrap, { backgroundColor: colors.primary + "15" }]}>
                     <Feather name="check-square" size={22} color={colors.primary} />
                   </View>
                   <Text style={styles.actionBtnText}>Record Attendance</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
+                </AnimatedTouchable>
+                <AnimatedTouchable
                   style={styles.actionBtn}
                   onPress={() => router.push("/add-report")}
-                  activeOpacity={0.85}
                 >
                   <View style={[styles.actionIconWrap, { backgroundColor: colors.primary + "15" }]}>
                     <Feather name="edit" size={22} color={colors.primary} />
                   </View>
                   <Text style={styles.actionBtnText}>Add Report</Text>
-                </TouchableOpacity>
+                </AnimatedTouchable>
               </>
             )}
             
             {user?.role === "admin" && (
-              <TouchableOpacity
+              <AnimatedTouchable
                 style={styles.actionBtn}
                 onPress={() => router.push("/(tabs)/users")}
-                activeOpacity={0.85}
               >
                 <View style={[styles.actionIconWrap, { backgroundColor: colors.primary + "15" }]}>
                   <Feather name="shield" size={22} color={colors.primary} />
                 </View>
                 <Text style={styles.actionBtnText}>Manage Users</Text>
-              </TouchableOpacity>
+              </AnimatedTouchable>
             )}
           </View>
         </>
@@ -257,14 +285,18 @@ function makeStyles(colors: ReturnType<typeof useColors>, insets: ReturnType<typ
     attendanceValue: { fontSize: 32, fontFamily: "Inter_700Bold", color: "#fff", marginBottom: 14 },
     progressBar: { height: 8, backgroundColor: "rgba(255,255,255,0.3)", borderRadius: 4, overflow: "hidden" },
     progressFill: { height: "100%", backgroundColor: "#F59E0B", borderRadius: 4 },
-    actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+    actionsGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+    },
     actionBtn: {
-      flex: 1,
-      minWidth: "44%",
+      width: "48%",
       backgroundColor: colors.card,
       borderRadius: 16,
       padding: 16,
       alignItems: "center",
+      marginBottom: 12,
       borderWidth: 1,
       borderColor: colors.border,
       shadowColor: "#000",

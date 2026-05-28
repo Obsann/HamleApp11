@@ -3,21 +3,20 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
   Platform,
   RefreshControl,
-  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
 import { useGetAttendance, useGetStudents } from "@workspace/api-client-react";
 import type { Student } from "@workspace/api-client-react";
+
+import AnimatedTouchable from "@/components/AnimatedTouchable";
+import { Skeleton } from "@/components/SkeletonLoader";
 
 const GRADES = [
   "Grade 1", "Grade 2", "Grade 3", "Grade 4",
@@ -34,6 +33,21 @@ const GRADE_COLORS = [
   "#1B3D7A", "#7C3AED", "#16A34A", "#D97706",
   "#DC2626", "#0891B2", "#9D174D", "#065F46",
 ];
+
+function AttendanceSkeleton() {
+  return (
+    <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+        <Skeleton width="48%" height={140} borderRadius={18} />
+        <Skeleton width="48%" height={140} borderRadius={18} />
+        <Skeleton width="48%" height={140} borderRadius={18} />
+        <Skeleton width="48%" height={140} borderRadius={18} />
+        <Skeleton width="48%" height={140} borderRadius={18} />
+        <Skeleton width="48%" height={140} borderRadius={18} />
+      </View>
+    </View>
+  );
+}
 
 export default function AttendanceScreen() {
   const colors = useColors();
@@ -112,7 +126,7 @@ export default function AttendanceScreen() {
         <View style={{ paddingTop: top + 16, paddingHorizontal: 20, paddingBottom: 8 }}>
           <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: colors.foreground }}>Attendance</Text>
         </View>
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+        <AttendanceSkeleton />
       </View>
     );
   }
@@ -130,22 +144,23 @@ export default function AttendanceScreen() {
               <View style={{ paddingTop: top + 16, paddingHorizontal: 20, paddingBottom: 12 }}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                    <TouchableOpacity onPress={() => setSelectedGrade(null)} style={{ padding: 4 }}>
+                    <AnimatedTouchable onPress={() => setSelectedGrade(null)} style={{ padding: 4, width: 'auto' }} activeScale={0.9}>
                       <Feather name="arrow-left" size={22} color={colors.foreground} />
-                    </TouchableOpacity>
+                    </AnimatedTouchable>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                       <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: accentColor }} />
                       <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: colors.foreground }}>{selectedGrade}</Text>
                     </View>
                   </View>
                   {isTeacherOrAdmin && (
-                    <TouchableOpacity
-                      style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6 }}
-                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/add-attendance"); }}
+                    <AnimatedTouchable
+                      style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6, width: 'auto' }}
+                      onPress={() => { router.push("/add-attendance"); }}
+                      activeScale={0.9}
                     >
                       <Feather name="plus" size={16} color="#fff" />
                       <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Record</Text>
-                    </TouchableOpacity>
+                    </AnimatedTouchable>
                   )}
                 </View>
                 <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 6, marginLeft: 36 }}>
@@ -175,9 +190,9 @@ export default function AttendanceScreen() {
                   const initials = `${s.firstName?.[0] ?? ""}${s.lastName?.[0] ?? ""}`.toUpperCase() || "?";
 
                   return (
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/student/${s.id}` as any); }}
+                    <AnimatedTouchable
+                      activeScale={0.96}
+                      onPress={() => { router.push(`/student/${s.id}` as any); }}
                       style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}
                     >
                       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
@@ -218,7 +233,7 @@ export default function AttendanceScreen() {
                           <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>No records yet — tap to view profile</Text>
                         </View>
                       )}
-                    </TouchableOpacity>
+                    </AnimatedTouchable>
                   );
                 }}
               />
@@ -231,13 +246,14 @@ export default function AttendanceScreen() {
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: colors.foreground }}>Attendance</Text>
               {isTeacherOrAdmin && (
-                <TouchableOpacity
-                  style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6 }}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/add-attendance"); }}
+                <AnimatedTouchable
+                  style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6, width: 'auto' }}
+                  onPress={() => { router.push("/add-attendance"); }}
+                  activeScale={0.9}
                 >
                   <Feather name="plus" size={16} color="#fff" />
                   <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Record</Text>
-                </TouchableOpacity>
+                </AnimatedTouchable>
               )}
             </View>
           </View>
@@ -259,7 +275,7 @@ export default function AttendanceScreen() {
               const accentColor = GRADE_COLORS[index % GRADE_COLORS.length]!;
 
               return (
-                <TouchableOpacity
+                <AnimatedTouchable
                   style={{
                     flex: 1, backgroundColor: colors.card, borderRadius: 18, padding: 16,
                     marginBottom: 12,
@@ -268,10 +284,9 @@ export default function AttendanceScreen() {
                     borderLeftWidth: 4, borderLeftColor: accentColor,
                   }}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setSelectedGrade(grade);
                   }}
-                  activeOpacity={0.82}
+                  activeScale={0.94}
                 >
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                     <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>{grade}</Text>
@@ -301,7 +316,7 @@ export default function AttendanceScreen() {
                   <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
                     <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
                   </View>
-                </TouchableOpacity>
+                </AnimatedTouchable>
               );
             }}
           />

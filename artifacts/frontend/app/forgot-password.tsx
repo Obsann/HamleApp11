@@ -50,7 +50,7 @@ export default function ForgotPasswordScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setStep(2);
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? "Could not find account or security questions.";
+      const msg = err?.data?.message ?? err?.message ?? "Could not find account or security questions.";
       setError(msg);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
@@ -76,7 +76,7 @@ export default function ForgotPasswordScreen() {
       alert("A temporary password has been emailed to you.");
       router.replace("/login");
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? "Incorrect security answers. Please try again.";
+      const msg = err?.data?.message ?? err?.message ?? "Incorrect security answers. Please try again.";
       setError(msg);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {

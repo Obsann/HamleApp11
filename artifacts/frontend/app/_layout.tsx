@@ -84,6 +84,10 @@ function RootLayoutNav() {
           options={{ headerShown: true, title: "Add User", headerBackTitle: "Back", presentation: "modal" }}
         />
         <Stack.Screen
+          name="add-student"
+          options={{ headerShown: true, title: "Add Student", headerBackTitle: "Back", presentation: "modal" }}
+        />
+        <Stack.Screen
           name="edit-user"
           options={{ headerShown: true, title: "Edit User", headerBackTitle: "Back" }}
         />
@@ -96,12 +100,16 @@ function RootLayoutNav() {
   );
 }
 
+import Toast from "react-native-toast-message";
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
+    // Explicitly bundle Feather so Metro resolves the TTF through pnpm symlinks
+    feather: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf"),
   });
 
   useEffect(() => {
@@ -120,6 +128,7 @@ export default function RootLayout() {
             <GestureHandlerRootView style={{ flex: 1 }}>
               <KeyboardProvider>
                 <RootLayoutNav />
+                <Toast />
               </KeyboardProvider>
             </GestureHandlerRootView>
           </AuthProvider>

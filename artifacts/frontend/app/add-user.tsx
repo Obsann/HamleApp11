@@ -3,9 +3,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   ScrollView,
-  Alert,
   ActivityIndicator,
   Platform,
 } from "react-native";
@@ -14,9 +12,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import Toast from "react-native-toast-message";
 
 import { useColors } from "@/hooks/useColors";
 import { useCreateUser, getGetUsersQueryKey } from "@workspace/api-client-react";
+import AnimatedTouchable from "@/components/AnimatedTouchable";
 
 type Role = "teacher" | "parent";
 
@@ -38,14 +38,23 @@ export default function AddUserScreen() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Toast.show({
+          type: "success",
+          text1: "User Created",
+          text2: `${name} has been added successfully.`,
+        });
         router.back();
       },
       onError: (err: any) => {
         const msg =
-          err?.response?.data?.message ??
+          err?.data?.message ??
           err?.message ??
           "Failed to create user. Please try again.";
-        Alert.alert("Error", msg);
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: msg,
+        });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       },
     },
@@ -58,45 +67,101 @@ export default function AddUserScreen() {
 
   function handleSubmit() {
     if (!name.trim()) {
-      Alert.alert("Missing fields", "Please enter the user's full name.");
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Please enter the user's full name.",
+      });
       return;
     }
     if (!NAME_REGEX.test(name.trim())) {
-      Alert.alert("Invalid Name", "Name must contain only letters (no numbers or special characters).");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Name",
+        text2: "Name must contain only letters.",
+      });
       return;
     }
     if (!email.trim()) {
-      Alert.alert("Missing fields", "Please enter an email address.");
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Please enter an email address.",
+      });
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      Alert.alert("Invalid email", "Please enter a valid email address.");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Email",
+        text2: "Please enter a valid email address.",
+      });
+      return;
+    }
+    if (!recoveryEmail.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Please enter a recovery email address.",
+      });
+      return;
+    }
+    if (!emailRegex.test(recoveryEmail.trim())) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Email",
+        text2: "Please enter a valid recovery email address.",
+      });
       return;
     }
     if (!password.trim()) {
-      Alert.alert("Missing fields", "Please enter a password.");
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Please enter a password.",
+      });
       return;
     }
     // Match backend password complexity requirements
     if (password.length < 8) {
-      Alert.alert("Weak Password", "Password must be at least 8 characters.");
+      Toast.show({
+        type: "error",
+        text1: "Weak Password",
+        text2: "Password must be at least 8 characters.",
+      });
       return;
     }
     if (!/[a-z]/.test(password)) {
-      Alert.alert("Weak Password", "Password must contain at least one lowercase letter.");
+      Toast.show({
+        type: "error",
+        text1: "Weak Password",
+        text2: "Password must contain at least one lowercase letter.",
+      });
       return;
     }
     if (!/[A-Z]/.test(password)) {
-      Alert.alert("Weak Password", "Password must contain at least one uppercase letter.");
+      Toast.show({
+        type: "error",
+        text1: "Weak Password",
+        text2: "Password must contain at least one uppercase letter.",
+      });
       return;
     }
     if (!/[0-9]/.test(password)) {
-      Alert.alert("Weak Password", "Password must contain at least one number.");
+      Toast.show({
+        type: "error",
+        text1: "Weak Password",
+        text2: "Password must contain at least one number.",
+      });
       return;
     }
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      Alert.alert("Weak Password", 'Password must contain at least one special character (!@#$%^&* etc.).');
+      Toast.show({
+        type: "error",
+        text1: "Weak Password",
+        text2: "Password must contain at least one special character (!@#$%^&* etc.).",
+      });
       return;
     }
 
@@ -105,7 +170,7 @@ export default function AddUserScreen() {
       data: {
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        recoveryEmail: recoveryEmail.trim().toLowerCase() || email.trim().toLowerCase(),
+        recoveryEmail: recoveryEmail.trim().toLowerCase(),
         password,
         role,
       },
@@ -130,9 +195,9 @@ export default function AddUserScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 24, gap: 12 }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 4 }}>
+        <AnimatedTouchable onPress={() => router.back()} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
-        </TouchableOpacity>
+        </AnimatedTouchable>
         <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: colors.foreground }}>
           Add New User
         </Text>
@@ -161,7 +226,7 @@ export default function AddUserScreen() {
         autoCorrect={false}
       />
       
-      <Text style={[labelStyle, { color: colors.foreground }]}>Recovery Email Address (Optional)</Text>
+      <Text style={[labelStyle, { color: colors.foreground }]}>Recovery Email Address *</Text>
       <TextInput
         style={[inputStyle, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border }]}
         value={recoveryEmail}
@@ -183,18 +248,18 @@ export default function AddUserScreen() {
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry={!showPassword}
         />
-        <TouchableOpacity
+        <AnimatedTouchable
           onPress={() => setShowPassword((p) => !p)}
-          style={{ position: "absolute", right: 16, top: 0, bottom: 0, justifyContent: "center" }}
+          style={{ position: "absolute", right: 16, top: 0, bottom: 0, justifyContent: "center", width: 36 }}
         >
           <Feather name={showPassword ? "eye-off" : "eye"} size={18} color={colors.mutedForeground} />
-        </TouchableOpacity>
+        </AnimatedTouchable>
       </View>
 
       <Text style={[labelStyle, { color: colors.foreground }]}>Role *</Text>
       <View style={{ gap: 10, marginBottom: 32 }}>
         {ROLES.map((r) => (
-          <TouchableOpacity
+          <AnimatedTouchable
             key={r.key}
             onPress={() => setRole(r.key)}
             style={{
@@ -221,11 +286,11 @@ export default function AddUserScreen() {
               </Text>
             </View>
             {role === r.key && <Feather name="check-circle" size={20} color={colors.primary} />}
-          </TouchableOpacity>
+          </AnimatedTouchable>
         ))}
       </View>
 
-      <TouchableOpacity
+      <AnimatedTouchable
         style={{
           height: 54, backgroundColor: isPending ? colors.mutedForeground : colors.primary,
           borderRadius: 14, alignItems: "center", justifyContent: "center",
@@ -236,11 +301,11 @@ export default function AddUserScreen() {
         {isPending ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff" }}>
+          <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff", textAlign: "center" }}>
             Create User
           </Text>
         )}
-      </TouchableOpacity>
+      </AnimatedTouchable>
     </ScrollView>
   );
 }

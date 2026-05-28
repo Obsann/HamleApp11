@@ -142,7 +142,14 @@ router.get("/auth/forgot-password/questions", async (req: Request, res: Response
     return;
   }
 
-  const user = await UserModel.findOne({ email: email.toLowerCase() });
+  console.time('db-query');
+  const user = await UserModel.findOne({
+    $or: [
+      { email: email.toLowerCase() },
+      { recoveryEmail: email.toLowerCase() }
+    ]
+  });
+  console.timeEnd('db-query');
   if (!user || user.deletedAt) {
     res.status(404).json({ message: "No active account found with that email." });
     return;
@@ -168,7 +175,12 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
     return;
   }
 
-  const user = await UserModel.findOne({ email: email.toLowerCase() });
+  const user = await UserModel.findOne({
+    $or: [
+      { email: email.toLowerCase() },
+      { recoveryEmail: email.toLowerCase() }
+    ]
+  });
   if (!user || user.deletedAt) {
     res.status(400).json({ message: "Invalid email or incorrect security answers." });
     return;

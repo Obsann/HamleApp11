@@ -36,7 +36,6 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Dashboard",
-          href: isParent ? null : undefined, // Hide global dashboard for parents
           tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
         }}
       />

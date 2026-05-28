@@ -20,6 +20,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useGetStudents } from "@workspace/api-client-react";
 import type { Student } from "@workspace/api-client-react";
 
+import AnimatedTouchable from "@/components/AnimatedTouchable";
+import { SkeletonList } from "@/components/SkeletonLoader";
+
 function StudentCard({ student, onPress }: { student: Student; onPress: () => void }) {
   const colors = useColors();
   const initials = `${student.firstName[0]}${student.lastName[0]}`.toUpperCase();
@@ -28,10 +31,10 @@ function StudentCard({ student, onPress }: { student: Student; onPress: () => vo
   const avatarColor = gradeColors[colorIndex]!;
 
   return (
-    <TouchableOpacity
+    <AnimatedTouchable
       style={[styles.card, { backgroundColor: colors.card }]}
-      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}
-      activeOpacity={0.85}
+      onPress={() => { onPress(); }}
+      activeScale={0.96}
     >
       <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
         <Text style={styles.avatarText}>{initials}</Text>
@@ -51,7 +54,7 @@ function StudentCard({ student, onPress }: { student: Student; onPress: () => vo
         )}
       </View>
       <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
-    </TouchableOpacity>
+    </AnimatedTouchable>
   );
 }
 
@@ -153,7 +156,7 @@ export default function StudentsScreen() {
             {user?.role === "parent" ? "My Children" : "Students"}
           </Text>
           {isAdmin && (
-            <TouchableOpacity
+            <AnimatedTouchable
               style={{
                 backgroundColor: colors.primary,
                 borderRadius: 12,
@@ -163,14 +166,12 @@ export default function StudentsScreen() {
                 alignItems: "center",
                 gap: 6,
               }}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push("/add-student");
-              }}
+              onPress={() => router.push("/add-student")}
+              activeScale={0.9}
             >
               <Feather name="plus" size={16} color="#fff" />
               <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Add Student</Text>
-            </TouchableOpacity>
+            </AnimatedTouchable>
           )}
         </View>
 
@@ -197,15 +198,16 @@ export default function StudentsScreen() {
                 ({filtered.length} student{filtered.length !== 1 ? "s" : ""})
               </Text>
             </View>
-            <TouchableOpacity
+            <AnimatedTouchable
               onPress={clearExternalFilter}
               style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+              activeScale={0.9}
             >
               <Feather name="x-circle" size={16} color={colors.mutedForeground} />
               <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>
                 Clear
               </Text>
-            </TouchableOpacity>
+            </AnimatedTouchable>
           </View>
         )}
 
@@ -224,15 +226,17 @@ export default function StudentsScreen() {
             onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")}>
+            <AnimatedTouchable onPress={() => setSearch("")} activeScale={0.9}>
               <Feather name="x" size={16} color={colors.mutedForeground} />
-            </TouchableOpacity>
+            </AnimatedTouchable>
           )}
         </View>
       </View>
 
       {isLoading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+        <View style={{ marginTop: 20 }}>
+          <SkeletonList count={5} />
+        </View>
       ) : (
         <FlatList
           data={filtered}

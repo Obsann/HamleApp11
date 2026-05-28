@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import Toast from "react-native-toast-message";
 
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
@@ -40,6 +41,15 @@ export default function ProfileScreen() {
   const [question2, setQuestion2] = useState(user?.securityQuestion2 || "");
   const [answer2, setAnswer2] = useState("");
 
+  useEffect(() => {
+    if (user) {
+      setEmail(user.email || "");
+      setRecoveryEmail(user.recoveryEmail || "");
+      setQuestion1(user.securityQuestion1 || "");
+      setQuestion2(user.securityQuestion2 || "");
+    }
+  }, [user]);
+
   const roleLabel =
     user?.role === "admin"
       ? "Administrator"
@@ -51,17 +61,29 @@ export default function ProfileScreen() {
 
   const handlePasswordChange = () => {
     if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
-      Alert.alert("Missing Fields", "Please fill in all password fields.");
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Please fill in all password fields.",
+      });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert("Passwords Mismatch", "New password and confirmation do not match.");
+      Toast.show({
+        type: "error",
+        text1: "Passwords Mismatch",
+        text2: "New password and confirmation do not match.",
+      });
       return;
     }
 
     if (newPassword.length < 6) {
-      Alert.alert("Weak Password", "New password must be at least 6 characters.");
+      Toast.show({
+        type: "error",
+        text1: "Weak Password",
+        text2: "New password must be at least 6 characters.",
+      });
       return;
     }
 
@@ -77,14 +99,22 @@ export default function ProfileScreen() {
       {
         onSuccess: (res) => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          Alert.alert("Success", res.message || "Password changed successfully.");
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: res.message || "Password changed successfully.",
+          });
           setCurrentPassword("");
           setNewPassword("");
           setConfirmPassword("");
         },
         onError: (err: any) => {
-          const msg = err?.response?.data?.message ?? "Failed to change password. Please check your current password.";
-          Alert.alert("Error", msg);
+          const msg = err?.data?.message ?? err?.message ?? "Failed to change password. Please check your current password.";
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: msg,
+          });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         },
       }
@@ -107,21 +137,43 @@ export default function ProfileScreen() {
     if (!user?.id) return;
 
     if (!email.trim() || !email.includes("@")) {
-      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Email",
+        text2: "Please enter a valid email address.",
+      });
+      return;
+    }
+    if (!recoveryEmail.trim() || !recoveryEmail.includes("@")) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Recovery Email",
+        text2: "Please enter a valid recovery email address.",
+      });
       return;
     }
 
     // Prepare update payload
     const payload: any = {
       email: email.trim(),
-      recoveryEmail: recoveryEmail.trim() || undefined,
+      recoveryEmail: recoveryEmail.trim(),
     };
 
-    // If they want to update questions, they must provide all fields
-    const isUpdatingQuestions = question1.trim() || answer1.trim() || question2.trim() || answer2.trim();
+    // Check if security questions/answers are actually being modified
+    const isQuestion1Changed = question1.trim() !== (user?.securityQuestion1 || "").trim();
+    const isQuestion2Changed = question2.trim() !== (user?.securityQuestion2 || "").trim();
+    const isAnswer1Entered = answer1.trim() !== "";
+    const isAnswer2Entered = answer2.trim() !== "";
+
+    const isUpdatingQuestions = isQuestion1Changed || isQuestion2Changed || isAnswer1Entered || isAnswer2Entered;
+
     if (isUpdatingQuestions) {
       if (!question1.trim() || !answer1.trim() || !question2.trim() || !answer2.trim()) {
-        Alert.alert("Missing Fields", "To update security questions, you must provide BOTH questions and BOTH answers.");
+        Toast.show({
+          type: "error",
+          text1: "Missing Fields",
+          text2: "To update security questions, you must provide BOTH questions and BOTH answers.",
+        });
         return;
       }
       payload.securityQuestion1 = question1.trim();
@@ -136,7 +188,11 @@ export default function ProfileScreen() {
       {
         onSuccess: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          Alert.alert("Success", "Profile updated successfully! If you changed your email, you will need to use it for your next login.");
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: "Profile updated successfully! If email changed, please use new email on next login.",
+          });
           
           updateUserContext({
             email: email.trim(),
@@ -151,8 +207,12 @@ export default function ProfileScreen() {
           }
         },
         onError: (err: any) => {
-          const msg = err?.response?.data?.message ?? "Failed to update profile.";
-          Alert.alert("Error", msg);
+          const msg = err?.data?.message ?? err?.message ?? "Failed to update profile.";
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: msg,
+          });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
       }
@@ -207,7 +267,7 @@ export default function ProfileScreen() {
           autoCapitalize="none"
         />
         
-        <Text style={[styles.inputLabel, { color: colors.foreground }]}>Recovery Email Address (Optional)</Text>
+        <Text style={[styles.inputLabel, { color: colors.foreground }]}>Recovery Email Address *</Text>
         <TextInput
           style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
           value={recoveryEmail}

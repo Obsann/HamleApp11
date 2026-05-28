@@ -3,8 +3,6 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
   Platform,
   RefreshControl,
   Alert,
@@ -14,10 +12,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useQueryClient } from "@tanstack/react-query";
+import Toast from "react-native-toast-message";
 
 import { useColors } from "@/hooks/useColors";
 import { useGetUsers, useDeleteUser, getGetUsersQueryKey } from "@workspace/api-client-react";
 import type { UserDetail } from "@workspace/api-client-react";
+import AnimatedTouchable from "@/components/AnimatedTouchable";
+import { SkeletonList } from "@/components/SkeletonLoader";
 
 const ROLE_CONFIG = {
   teacher: { bg: "#E8EEF8", text: "#1B3D7A", label: "Teacher", icon: "book" as const },
@@ -43,9 +44,9 @@ function UserCard({
   const initials = user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
   return (
-    <TouchableOpacity
+    <AnimatedTouchable
       onPress={onPress}
-      activeOpacity={0.88}
+      activeScale={0.96}
       style={{
         backgroundColor: colors.card,
         borderRadius: 16,
@@ -104,20 +105,22 @@ function UserCard({
       </View>
 
       <View style={{ flexDirection: "row", gap: 8 }}>
-        <TouchableOpacity
+        <AnimatedTouchable
           onPress={onEdit}
-          style={{ padding: 8, backgroundColor: colors.secondary, borderRadius: 10 }}
+          style={{ padding: 8, backgroundColor: colors.secondary, borderRadius: 10, width: "auto" }}
+          activeScale={0.85}
         >
           <Feather name="edit-2" size={16} color={colors.foreground} />
-        </TouchableOpacity>
-        <TouchableOpacity
+        </AnimatedTouchable>
+        <AnimatedTouchable
           onPress={onDelete}
-          style={{ padding: 8, backgroundColor: "#FEE2E2", borderRadius: 10 }}
+          style={{ padding: 8, backgroundColor: "#FEE2E2", borderRadius: 10, width: "auto" }}
+          activeScale={0.85}
         >
           <Feather name="trash-2" size={16} color="#DC2626" />
-        </TouchableOpacity>
+        </AnimatedTouchable>
       </View>
-    </TouchableOpacity>
+    </AnimatedTouchable>
   );
 }
 
@@ -165,9 +168,10 @@ export default function UsersScreen() {
               {
                 onSuccess: () => {
                   queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() });
+                  Toast.show({ type: "success", text1: "User Deleted", text2: `${user.name} has been removed.` });
                 },
                 onError: () => {
-                  Alert.alert("Error", "Failed to delete user. Please try again.");
+                  Toast.show({ type: "error", text1: "Error", text2: "Failed to delete user. Please try again." });
                 },
               }
             );
@@ -191,7 +195,7 @@ export default function UsersScreen() {
           <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: colors.foreground }}>
             Manage Users
           </Text>
-          <TouchableOpacity
+          <AnimatedTouchable
             style={{
               backgroundColor: colors.primary,
               borderRadius: 12,
@@ -200,28 +204,29 @@ export default function UsersScreen() {
               flexDirection: "row",
               alignItems: "center",
               gap: 6,
+              width: "auto",
             }}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/add-user");
-            }}
+            onPress={() => router.push("/add-user")}
+            activeScale={0.9}
           >
             <Feather name="user-plus" size={16} color="#fff" />
             <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Add</Text>
-          </TouchableOpacity>
+          </AnimatedTouchable>
         </View>
 
         <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
           {filters.map((f) => (
-            <TouchableOpacity
+            <AnimatedTouchable
               key={f.key}
               style={{
                 paddingHorizontal: 14,
                 paddingVertical: 8,
                 borderRadius: 20,
                 backgroundColor: filter === f.key ? colors.primary : colors.secondary,
+                width: "auto",
               }}
               onPress={() => setFilter(f.key)}
+              activeScale={0.9}
             >
               <Text
                 style={{
@@ -232,7 +237,7 @@ export default function UsersScreen() {
               >
                 {f.label}
               </Text>
-            </TouchableOpacity>
+            </AnimatedTouchable>
           ))}
         </View>
 
@@ -247,7 +252,9 @@ export default function UsersScreen() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+        <View style={{ marginTop: 20 }}>
+          <SkeletonList count={5} />
+        </View>
       ) : (
         <FlatList
           data={users ?? []}
@@ -283,3 +290,4 @@ export default function UsersScreen() {
     </View>
   );
 }
+

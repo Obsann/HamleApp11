@@ -7,13 +7,13 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useQueryClient } from "@tanstack/react-query";
+import Toast from "react-native-toast-message";
 
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
@@ -63,19 +63,19 @@ export default function AddStudentScreen() {
 
   const handleSubmit = async () => {
     if (!firstName.trim() || !lastName.trim() || !grade || !dateOfBirth.trim()) {
-      Alert.alert("Missing Fields", "Please fill in all required fields.");
+      Toast.show({ type: "error", text1: "Missing Fields", text2: "Please fill in all required fields." });
       return;
     }
     if (!NAME_REGEX.test(firstName.trim())) {
-      Alert.alert("Invalid Name", "First name must contain only letters (no numbers or special characters).");
+      Toast.show({ type: "error", text1: "Invalid Name", text2: "First name must contain only letters." });
       return;
     }
     if (!NAME_REGEX.test(lastName.trim())) {
-      Alert.alert("Invalid Name", "Last name must contain only letters (no numbers or special characters).");
+      Toast.show({ type: "error", text1: "Invalid Name", text2: "Last name must contain only letters." });
       return;
     }
     if (!isValidDate(dateOfBirth.trim())) {
-      Alert.alert("Invalid Date", "Date of Birth must be a valid date in YYYY-MM-DD format.");
+      Toast.show({ type: "error", text1: "Invalid Date", text2: "Date of Birth must be in YYYY-MM-DD format." });
       return;
     }
     // Ensure the child is between 3 and 18 years old
@@ -84,11 +84,11 @@ export default function AddStudentScreen() {
     const ageDiffMs = today.getTime() - dob.getTime();
     const ageYears = ageDiffMs / (365.25 * 24 * 60 * 60 * 1000);
     if (ageYears < 3 || ageYears > 18) {
-      Alert.alert("Invalid Age", "Student must be between 3 and 18 years old.");
+      Toast.show({ type: "error", text1: "Invalid Age", text2: "Student must be between 3 and 18 years old." });
       return;
     }
     if (faydaId.trim() && (faydaId.trim().length !== 12 || !/^\d{12}$/.test(faydaId.trim()))) {
-      Alert.alert("Invalid Fayda ID", "Fayda ID must be exactly 12 digits (numbers only).");
+      Toast.show({ type: "error", text1: "Invalid Fayda ID", text2: "Fayda ID must be exactly 12 digits." });
       return;
     }
 
@@ -120,9 +120,10 @@ export default function AddStudentScreen() {
       }
       await queryClient.invalidateQueries({ queryKey: getGetStudentsQueryKey() });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Toast.show({ type: "success", text1: "Student Added", text2: `${firstName} ${lastName} has been enrolled.` });
       router.back();
     } catch (err: any) {
-      Alert.alert("Error", err?.message ?? "Failed to add student. Please try again.");
+      Toast.show({ type: "error", text1: "Error", text2: err?.message ?? "Failed to add student." });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsPending(false);

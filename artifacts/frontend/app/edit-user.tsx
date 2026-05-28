@@ -3,9 +3,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   ScrollView,
-  Alert,
   ActivityIndicator,
   Platform,
 } from "react-native";
@@ -13,9 +11,11 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import Toast from "react-native-toast-message";
 
 import { useColors } from "@/hooks/useColors";
 import { useGetUser, useUpdateUser, getGetUsersQueryKey } from "@workspace/api-client-react";
+import AnimatedTouchable from "@/components/AnimatedTouchable";
 
 type Role = "teacher" | "parent";
 
@@ -51,37 +51,85 @@ export default function EditUserScreen() {
 
   function handleSubmit() {
     if (!name.trim() || !email.trim()) {
-      Alert.alert("Missing fields", "Name and email are required.");
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Name and email are required.",
+      });
       return;
     }
     if (!NAME_REGEX.test(name.trim())) {
-      Alert.alert("Invalid Name", "Name must contain only letters (no numbers or special characters).");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Name",
+        text2: "Name must contain only letters.",
+      });
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      Toast.show({
+        type: "error",
+        text1: "Invalid Email",
+        text2: "Please enter a valid email address.",
+      });
+      return;
+    }
+    if (!recoveryEmail.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Please enter a recovery email address.",
+      });
+      return;
+    }
+    if (!emailRegex.test(recoveryEmail.trim())) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Email",
+        text2: "Please enter a valid recovery email address.",
+      });
       return;
     }
     if (password) {
       if (password.length < 8) {
-        Alert.alert("Weak Password", "Password must be at least 8 characters.");
+        Toast.show({
+          type: "error",
+          text1: "Weak Password",
+          text2: "Password must be at least 8 characters.",
+        });
         return;
       }
       if (!/[a-z]/.test(password)) {
-        Alert.alert("Weak Password", "Password must contain at least one lowercase letter.");
+        Toast.show({
+          type: "error",
+          text1: "Weak Password",
+          text2: "Password must contain at least one lowercase letter.",
+        });
         return;
       }
       if (!/[A-Z]/.test(password)) {
-        Alert.alert("Weak Password", "Password must contain at least one uppercase letter.");
+        Toast.show({
+          type: "error",
+          text1: "Weak Password",
+          text2: "Password must contain at least one uppercase letter.",
+        });
         return;
       }
       if (!/[0-9]/.test(password)) {
-        Alert.alert("Weak Password", "Password must contain at least one number.");
+        Toast.show({
+          type: "error",
+          text1: "Weak Password",
+          text2: "Password must contain at least one number.",
+        });
         return;
       }
       if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-        Alert.alert("Weak Password", 'Password must contain at least one special character (!@#$%^&* etc.).');
+        Toast.show({
+          type: "error",
+          text1: "Weak Password",
+          text2: "Password must contain at least one special character (!@#$%^&* etc.).",
+        });
         return;
       }
     }
@@ -94,7 +142,7 @@ export default function EditUserScreen() {
         data: {
           name: name.trim(),
           email: email.trim().toLowerCase(),
-          recoveryEmail: recoveryEmail.trim().toLowerCase() || email.trim().toLowerCase(),
+          recoveryEmail: recoveryEmail.trim().toLowerCase(),
           password: password || undefined,
           role,
         },
@@ -102,11 +150,22 @@ export default function EditUserScreen() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() });
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          Toast.show({
+            type: "success",
+            text1: "User Updated",
+            text2: `${name} has been updated successfully.`,
+          });
           router.back();
         },
         onError: (err: any) => {
-          const msg = err?.response?.data?.message ?? "Failed to update user.";
-          Alert.alert("Error", msg);
+          const msg = err?.data?.message ?? err?.message ?? "Failed to update user.";
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: msg,
+          });
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         },
       }
     );
@@ -153,7 +212,7 @@ export default function EditUserScreen() {
         autoCorrect={false}
       />
 
-      <Text style={labelStyle(colors)}>Recovery Email Address (Optional)</Text>
+      <Text style={labelStyle(colors)}>Recovery Email Address *</Text>
       <TextInput
         style={inputStyle(colors)}
         value={recoveryEmail}
@@ -181,7 +240,7 @@ export default function EditUserScreen() {
       <Text style={labelStyle(colors)}>Role</Text>
       <View style={{ flexDirection: "row", gap: 12, marginBottom: 32 }}>
         {(["teacher", "parent"] as Role[]).map((r) => (
-          <TouchableOpacity
+          <AnimatedTouchable
             key={r}
             onPress={() => setRole(r)}
             style={{
@@ -200,15 +259,16 @@ export default function EditUserScreen() {
                 fontFamily: "Inter_600SemiBold",
                 color: role === r ? colors.primary : colors.mutedForeground,
                 textTransform: "capitalize",
+                textAlign: "center",
               }}
             >
               {r}
             </Text>
-          </TouchableOpacity>
+          </AnimatedTouchable>
         ))}
       </View>
 
-      <TouchableOpacity
+      <AnimatedTouchable
         style={{
           backgroundColor: isPending ? colors.mutedForeground : colors.primary,
           borderRadius: 14,
@@ -221,11 +281,11 @@ export default function EditUserScreen() {
         {isPending ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff" }}>
+          <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff", textAlign: "center" }}>
             Save Changes
           </Text>
         )}
-      </TouchableOpacity>
+      </AnimatedTouchable>
     </ScrollView>
   );
 }

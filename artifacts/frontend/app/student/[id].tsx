@@ -7,10 +7,10 @@ import {
   ActivityIndicator,
   Platform,
   TouchableOpacity,
-  Alert,
   Modal,
   Linking,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -81,11 +81,20 @@ export default function StudentDetailScreen() {
         onSuccess: async () => {
           await queryClient.invalidateQueries({ queryKey: getGetStudentsQueryKey() });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          Toast.show({
+            type: "success",
+            text1: "Student Deleted",
+            text2: `${student?.firstName || "Student"} has been removed.`,
+          });
           router.replace("/(tabs)/students");
         },
         onError: (err: any) => {
-          const msg = err?.response?.data?.message ?? "Failed to delete student.";
-          Alert.alert("Error", msg);
+          const msg = err?.data?.message ?? err?.message ?? "Failed to delete student.";
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: msg,
+          });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         },
       }

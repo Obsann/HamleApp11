@@ -318,53 +318,83 @@ export async function seedIfEmpty() {
       ? t2._id
       : t3._id;
 
+  /**
+   * Generate a grade-type report row.
+   * Since insertMany() bypasses pre-save hooks, we must manually compute
+   * score = midExam + tests + continuousAssessment + finalExam
+   * so that both the components and the total are always in sync.
+   */
+  function makeGradeReport(
+    studentId: any,
+    teacherId: any,
+    subject: string,
+    term: string,
+    date: string,
+    notes?: string
+  ) {
+    // Each component out of 25 → total out of 100
+    const mid  = 10 + Math.floor(Math.random() * 16); // 10–25
+    const test = 8  + Math.floor(Math.random() * 13); // 8–20
+    const ca   = 5  + Math.floor(Math.random() * 11); // 5–15
+    // final fills up to leave a believable total (40–100 range)
+    const maxFinal = Math.min(40, 100 - mid - test - ca);
+    const final = Math.max(5, maxFinal - Math.floor(Math.random() * 10));
+    const score = mid + test + ca + final;
+    return {
+      studentId,
+      teacherId,
+      subject,
+      score,
+      midExam: mid,
+      tests: test,
+      continuousAssessment: ca,
+      finalExam: final,
+      status: score >= 50 ? "Pass" : "Fail",
+      type: "grade",
+      date,
+      term,
+      notes: notes ?? (score >= 85 ? "Excellent performance" : score >= 70 ? "Satisfactory progress" : "Needs improvement"),
+    };
+  }
+
   for (const student of allStudents) {
     const tid = teacherFor(student);
     for (const subject of subjects) {
-      const base = 60 + Math.floor(Math.random() * 35);
-      reportRows.push({
-        studentId: student._id,
-        teacherId: tid,
-        subject,
-        score: base,
-        type: "grade",
-        date: daysAgo(21),
-        term: terms[0],
-        notes:
-          base >= 85
-            ? "Excellent performance"
-            : base >= 70
-            ? "Satisfactory progress"
-            : "Needs improvement",
-      });
-      reportRows.push({
-        studentId: student._id,
-        teacherId: tid,
-        subject,
-        score: Math.min(100, base + Math.floor(Math.random() * 10) - 3),
-        type: "grade",
-        date: daysAgo(7),
-        term: terms[1],
-      });
+      reportRows.push(makeGradeReport(student._id, tid, subject, terms[0]!, daysAgo(21)));
+      reportRows.push(makeGradeReport(student._id, tid, subject, terms[1]!, daysAgo(7)));
     }
+    // Assessment-type: direct score, components are null (no hook computation needed)
+    const mathAssessScore = 55 + Math.floor(Math.random() * 40);
     reportRows.push({
       studentId: student._id,
       teacherId: tid,
       subject: "Mathematics",
-      score: 55 + Math.floor(Math.random() * 40),
+      score: mathAssessScore,
+      midExam: null,
+      tests: null,
+      continuousAssessment: null,
+      finalExam: null,
+      status: mathAssessScore >= 50 ? "Pass" : "Fail",
       type: "assessment",
       date: daysAgo(14),
       term: terms[0],
       notes: "Mid-term assessment",
     });
+    const engAssessScore = 55 + Math.floor(Math.random() * 40);
     reportRows.push({
       studentId: student._id,
       teacherId: tid,
       subject: "English",
-      score: 55 + Math.floor(Math.random() * 40),
+      score: engAssessScore,
+      midExam: null,
+      tests: null,
+      continuousAssessment: null,
+      finalExam: null,
+      status: engAssessScore >= 50 ? "Pass" : "Fail",
       type: "assessment",
       date: daysAgo(3),
       term: terms[1],
+      notes: "End-of-term reading assessment",
     });
   }
 

@@ -7,11 +7,11 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   Modal,
   Platform,
   RefreshControl,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -86,7 +86,11 @@ export default function AnnouncementsScreen() {
 
   const handleSave = () => {
     if (!title.trim() || !content.trim()) {
-      Alert.alert("Missing Fields", "Title and content are required.");
+      Toast.show({
+        type: "error",
+        text1: "Missing Fields",
+        text2: "Title and content are required.",
+      });
       return;
     }
 
@@ -107,11 +111,20 @@ export default function AnnouncementsScreen() {
           onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: getGetAnnouncementsQueryKey() });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Toast.show({
+              type: "success",
+              text1: "Success",
+              text2: "Announcement updated successfully.",
+            });
             setFormOpen(false);
           },
           onError: (err: any) => {
-            const msg = err?.response?.data?.message ?? "Failed to update announcement.";
-            Alert.alert("Error", msg);
+            const msg = err?.data?.message ?? err?.message ?? "Failed to update announcement.";
+            Toast.show({
+              type: "error",
+              text1: "Error",
+              text2: msg,
+            });
           },
         }
       );
@@ -129,11 +142,20 @@ export default function AnnouncementsScreen() {
           onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: getGetAnnouncementsQueryKey() });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Toast.show({
+              type: "success",
+              text1: "Success",
+              text2: "Announcement created successfully.",
+            });
             setFormOpen(false);
           },
           onError: (err: any) => {
-            const msg = err?.response?.data?.message ?? "Failed to create announcement.";
-            Alert.alert("Error", msg);
+            const msg = err?.data?.message ?? err?.message ?? "Failed to create announcement.";
+            Toast.show({
+              type: "error",
+              text1: "Error",
+              text2: msg,
+            });
           },
         }
       );
@@ -151,10 +173,19 @@ export default function AnnouncementsScreen() {
         onSuccess: async () => {
           await queryClient.invalidateQueries({ queryKey: getGetAnnouncementsQueryKey() });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: "Announcement deleted successfully.",
+          });
         },
         onError: (err: any) => {
-          const msg = err?.response?.data?.message ?? "Failed to delete announcement.";
-          Alert.alert("Error", msg);
+          const msg = err?.data?.message ?? err?.message ?? "Failed to delete announcement.";
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: msg,
+          });
         },
       }
     );

@@ -18,6 +18,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useGetReports, useGetStudents } from "@workspace/api-client-react";
 import type { Report } from "@workspace/api-client-react";
 
+import AnimatedTouchable from "@/components/AnimatedTouchable";
+import { SkeletonList } from "@/components/SkeletonLoader";
+
 const GRADES = [
   "Grade 1", "Grade 2", "Grade 3", "Grade 4",
   "Grade 5", "Grade 6", "Grade 7", "Grade 8",
@@ -45,9 +48,9 @@ function ReportCard({ report }: { report: Report }) {
   return (
     <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-        <TouchableOpacity
+        <AnimatedTouchable
           onPress={() => router.push(`/student/${report.studentId}` as any)}
-          activeOpacity={0.7}
+          activeScale={0.96}
           style={{ flex: 1, marginRight: 8 }}
         >
           <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.primary }}>
@@ -56,7 +59,7 @@ function ReportCard({ report }: { report: Report }) {
           <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 1 }}>
             Tap to view student profile
           </Text>
-        </TouchableOpacity>
+        </AnimatedTouchable>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           {report.status && (
             <View style={{ borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: isPass ? "#D1FAE5" : "#FEE2E2" }}>
@@ -76,19 +79,19 @@ function ReportCard({ report }: { report: Report }) {
         <View style={{ backgroundColor: colors.secondary + "50", borderRadius: 12, padding: 12, marginBottom: 12 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Mid Exam:</Text>
-            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.midExam} / 100</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.midExam} pts</Text>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Tests:</Text>
-            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.tests} / 100</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.tests} pts</Text>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Continuous Assessment:</Text>
-            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.continuousAssessment} / 100</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.continuousAssessment} pts</Text>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Final Exam:</Text>
-            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.finalExam} / 100</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{report.finalExam} pts</Text>
           </View>
         </View>
       )}
@@ -196,13 +199,14 @@ export default function ReportsScreen() {
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: colors.foreground }}>Reports</Text>
         {isTeacherOrAdmin && (
-          <TouchableOpacity
+          <AnimatedTouchable
             style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6 }}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/add-report"); }}
+            onPress={() => { router.push("/add-report"); }}
+            activeScale={0.9}
           >
             <Feather name="plus" size={16} color="#fff" />
             <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Add</Text>
-          </TouchableOpacity>
+          </AnimatedTouchable>
         )}
       </View>
 
@@ -210,27 +214,30 @@ export default function ReportsScreen() {
 
       <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground, marginBottom: 10 }}>By Grade</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-        <TouchableOpacity
+        <AnimatedTouchable
           style={{
             paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
             backgroundColor: selectedGrade === null ? colors.primary : colors.secondary,
+            flex: 0,
           }}
           onPress={() => { setSelectedGrade(null); setTypeFilter("all"); }}
+          activeScale={0.9}
         >
           <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: selectedGrade === null ? "#fff" : colors.foreground }}>
             All Grades
           </Text>
-        </TouchableOpacity>
+        </AnimatedTouchable>
         {visibleGrades.map((g) => {
           const count = gradeReportCount.get(g) ?? 0;
           const isSelected = selectedGrade === g;
           return (
-            <TouchableOpacity
+            <AnimatedTouchable
               key={g}
               style={{
                 paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
                 backgroundColor: isSelected ? colors.primary : colors.secondary,
                 opacity: count === 0 ? 0.45 : 1,
+                flex: 0,
               }}
               onPress={() => {
                 if (count > 0) {
@@ -238,31 +245,33 @@ export default function ReportsScreen() {
                   setTypeFilter("all");
                 }
               }}
-              disabled={count === 0}
+              activeScale={count === 0 ? 1 : 0.9}
             >
               <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: isSelected ? "#fff" : colors.foreground }}>
                 {g.replace("Grade ", "G")}
                 {count > 0 ? ` · ${count}` : ""}
               </Text>
-            </TouchableOpacity>
+            </AnimatedTouchable>
           );
         })}
       </View>
 
       <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
         {TYPE_FILTERS.map((f) => (
-          <TouchableOpacity
+          <AnimatedTouchable
             key={f.key}
             style={{
               paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
               backgroundColor: typeFilter === f.key ? colors.primary : colors.secondary,
+              flex: 0,
             }}
             onPress={() => setTypeFilter(f.key)}
+            activeScale={0.9}
           >
             <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: typeFilter === f.key ? "#fff" : colors.foreground }}>
               {f.label}
             </Text>
-          </TouchableOpacity>
+          </AnimatedTouchable>
         ))}
       </View>
 
@@ -272,9 +281,9 @@ export default function ReportsScreen() {
           <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.primary }}>
             Showing: {selectedGrade}
           </Text>
-          <TouchableOpacity onPress={() => { setSelectedGrade(null); setTypeFilter("all"); }}>
+          <AnimatedTouchable onPress={() => { setSelectedGrade(null); setTypeFilter("all"); }} activeScale={0.9}>
             <Feather name="x-circle" size={15} color={colors.mutedForeground} />
-          </TouchableOpacity>
+          </AnimatedTouchable>
         </View>
       )}
     </View>
@@ -284,7 +293,9 @@ export default function ReportsScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         {ListHeader}
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+        <View style={{ marginTop: 20 }}>
+          <SkeletonList count={4} />
+        </View>
       </View>
     );
   }

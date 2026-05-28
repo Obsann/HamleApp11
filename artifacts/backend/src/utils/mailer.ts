@@ -20,8 +20,9 @@ const transporter = nodemailer.createTransport({
 
 export const sendMail = async (options: MailOptions): Promise<void> => {
   try {
+    const fromAddress = process.env.SMTP_FROM || (process.env.SMTP_USER ? `"Hamle SIS" <${process.env.SMTP_USER}>` : '"Hamle SIS" <noreply@hamlesis.edu.et>');
     const info = await transporter.sendMail({
-      from: `"Hamle SIS" <${process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@hamlesis.edu.et"}>`,
+      from: fromAddress,
       to: options.to,
       subject: options.subject,
       text: options.text,

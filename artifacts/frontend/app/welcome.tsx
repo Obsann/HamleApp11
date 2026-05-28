@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, Animated } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, Animated, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -70,8 +70,18 @@ export default function WelcomeScreen() {
       <View style={[styles.orb, { backgroundColor: colors.primary, top: -50, left: -50 }]} />
       <View style={[styles.orb, { backgroundColor: colors.tint, top: 150, right: -100, width: 250, height: 250 }]} />
       
-      <View style={[styles.content, { paddingTop: Math.max(insets.top, 80), paddingBottom: Math.max(insets.bottom, 40) }]}>
-        
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 24,
+          paddingTop: Math.max(insets.top, 40),
+          paddingBottom: Math.max(insets.bottom, 40),
+          justifyContent: "center",
+          gap: 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         <Animated.View 
           style={[
             styles.heroSection, 
@@ -143,8 +153,7 @@ export default function WelcomeScreen() {
             Authorized Personnel & Guardians Only
           </Text>
         </Animated.View>
-
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -227,13 +236,12 @@ const styles = StyleSheet.create({
     maxWidth: Platform.OS === "web" ? 500 : width * 0.85,
   },
   featuresSection: {
-    flex: 1,
     justifyContent: "center",
     maxWidth: Platform.OS === "web" ? 600 : "100%",
     width: "100%",
     alignSelf: "center",
     gap: 16,
-    marginVertical: 40,
+    marginVertical: 28,
   },
   featureCardContainer: {
     borderRadius: 20,
